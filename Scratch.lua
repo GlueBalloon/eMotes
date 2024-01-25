@@ -47,7 +47,7 @@ function Mote:avoid(neighbors)
 end
 
 -- ... [Rest of the code remains unchanged]
-]]
+
 function Mote:clump(neighbors)
     local averagePosition = vec2(0, 0)
     local total = 0
@@ -96,7 +96,7 @@ function Mote:avoid(neighbors)
         return vec2(0, 0)
     end
 end
-
+]]
 function Mote:clump(neighbors)
     local averagePosition = vec2(0, 0)
     local total = 0
@@ -117,6 +117,7 @@ function Mote:clump(neighbors)
         return vec2(0, 0)
     end
 end
+
 
 function Mote:avoid(neighbors)
     local avoidanceForce = vec2(0, 0)
@@ -140,7 +141,7 @@ function Mote:avoid(neighbors)
         return vec2(0, 0)
     end
 end
-
+--[[
 function Mote:clump(neighbors)
     local averagePosition = vec2(0, 0)
     local total = 0
@@ -160,3 +161,4 @@ function Mote:clump(neighbors)
         return vec2(0, 0)
     end
 end
+]]
