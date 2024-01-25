@@ -1,7 +1,7 @@
-MOTE_SIZE = 3
+MOTE_SIZE = 6
 MOTE_COUNT = 2000
-MOTE_SPEED_DEFAULT = 0.6
-TIMESCALE = 1
+MOTE_SPEED_DEFAULT = 0.1
+TIMESCALE = 100
 WIND_ANGLE = 0
 
 function updateWindDirection()
@@ -43,6 +43,9 @@ function Mote:update()
     self.position.y = (self.position.y + HEIGHT) % HEIGHT
 end
 
+function Mote:draw()
+    ellipse(self.position.x, self.position.y, MOTE_SIZE)
+end
 
 function Mote:applyForce(force)
     self.velocity = self.velocity + force
@@ -101,18 +104,22 @@ function Mote:affectNeighbors(neighbors)
     -- Default implementation does nothing
 end
 
-function Mote:draw()
-    ellipse(self.position.x, self.position.y, MOTE_SIZE)
-end
-
 -- Wind function using Perlin noise
 function wind(mote)
     local scale = 0.01
     local offset = mote.noiseOffset
     
-    local angle = noise(mote.position.x * scale + offset, mote.position.y * scale + offset) * math.pi * 2
-    --    local windForce = vec2(math.cos(angle), math.sin(angle))
-    local windForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
+    -- Individual wind direction based on Perlin noise
+    local individualAngle = noise(mote.position.x * scale + offset, mote.position.y * scale + offset) * math.pi * 2
+    local individualWindForce = vec2(math.cos(individualAngle), math.sin(individualAngle))
+    
+    -- Global wind direction
+    local globalWindForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
+    
+    -- Blend individual and global wind forces
+    local windForce = individualWindForce * 0.8 + globalWindForce * 0.2
+    
+    -- Random adjustment
     local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
     windForce = windForce + randomAdjustment
     
@@ -121,6 +128,7 @@ function wind(mote)
     
     return newPosition, newVelocity
 end
+
 
 -- Limit the magnitude of a vector
 function limit(vec, max)
@@ -185,7 +193,7 @@ function setup()
         table.insert(motes, Sun(math.random(WIDTH), math.random(HEIGHT)))
         table.insert(motes, Snowflake(math.random(WIDTH), math.random(HEIGHT)))
     end
-    parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
+    parameter.number("TIMESCALE", 0.1, 50, 15)  -- Slider from 0.1x to 5x speed
 end
 function draw()
     background(40, 40, 50)

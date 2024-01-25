@@ -1,3 +1,6 @@
+MOTE_SIZE = 3
+MOTE_COUNT = 2000
+
 -- Mote class
 Mote = class()
 
@@ -29,7 +32,7 @@ end
 
 
 function Mote:draw()
-    ellipse(self.position.x, self.position.y, 5)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE)
 end
 
 -- Wind function using Perlin noise
@@ -61,10 +64,9 @@ end
 
 -- Global variables
 local motes = {}
-local numMotes = 10000  -- Adjust the number of motes as needed
 
 function setup()
-    for i = 1, numMotes do
+    for i = 1, MOTE_COUNT do
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
 end

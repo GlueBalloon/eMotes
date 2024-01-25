@@ -1,4 +1,4 @@
-MOTE_SIZE = 6
+MOTE_SIZE = 3
 MOTE_COUNT = 2000
 -- Global time scale variable
 TIMESCALE = 1
@@ -68,26 +68,6 @@ function Mote:clump(neighbors)
     
     if total > 0 then
         averagePosition = averagePosition / total
-       -- local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed
-        local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed * 20
-        local steeringForce = desiredVelocity - self.velocity
-        return limit(steeringForce, self.maxForce)
-    else
-        return vec2(0, 0)
-    end
-end
-
-function Mote:clump(neighbors)
-    local averagePosition = vec2(0, 0)
-    local total = 0
-    
-    for _, neighbor in ipairs(neighbors) do
-        averagePosition = averagePosition + neighbor.position
-        total = total + 1
-    end
-    
-    if total > 0 then
-        averagePosition = averagePosition / total
         local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed
         local steeringForce = desiredVelocity - self.velocity
         steeringForce = limit(steeringForce, self.maxForce)
@@ -97,30 +77,6 @@ function Mote:clump(neighbors)
       --  steeringForce = steeringForce * (distance / self.perceptionRadius)
         steeringForce = steeringForce * (distance)
         return steeringForce
-    else
-        return vec2(0, 0)
-    end
-end
-
-function Mote:avoid(neighbors)
-    local avoidanceForce = vec2(0, 0)
-    local total = 0
-    local avoidanceRadius = MOTE_SIZE-- Adjust as needed
-    
-    for _, neighbor in ipairs(neighbors) do
-        local distance = self.position:dist(neighbor.position)
-        if distance < avoidanceRadius then
-            local pushAway = self.position - neighbor.position
-            pushAway = pushAway / distance  -- Normalize and weigh by distance
-            avoidanceForce = avoidanceForce + pushAway
-            total = total + 1
-        end
-    end
-    
-    if total > 0 then
-       -- avoidanceForce = avoidanceForce / total 
-        avoidanceForce = avoidanceForce / total * 0.01
-        return limit(avoidanceForce, self.maxForce)
     else
         return vec2(0, 0)
     end
@@ -161,8 +117,8 @@ function wind(mote)
     local offset = mote.noiseOffset
     
     local angle = noise(mote.position.x * scale + offset, mote.position.y * scale + offset) * math.pi * 2
---    local windForce = vec2(math.cos(angle), math.sin(angle))
-    local windForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
+    local windForce = vec2(math.cos(angle), math.sin(angle))
+    --local windForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
     local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
     windForce = windForce + randomAdjustment
     
