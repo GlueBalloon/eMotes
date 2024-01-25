@@ -4,6 +4,23 @@ MOTE_SPEED_DEFAULT = 0.1
 TIMESCALE = 100
 WIND_ANGLE = 0
 
+-- Global variables
+local motes = {}
+
+function setup()
+    -- Initialize motes
+    for i = 1, MOTE_COUNT do
+        table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
+    end
+    
+    -- Initialize a few Sun and Snowflake catalytes
+    for i = 1, 1 do  -- Adjust the number of Sun and Snowflake catalytes as needed
+        table.insert(motes, Sun(math.random(WIDTH), math.random(HEIGHT)))
+        table.insert(motes, Snowflake(math.random(WIDTH), math.random(HEIGHT)))
+    end
+    parameter.number("TIMESCALE", 0.1, 50, 3)  -- Slider from 0.1x to 5x speed
+end
+
 function updateWindDirection()
     -- Slowly change the wind direction over time
     WIND_ANGLE = noise(ElapsedTime * 0.1) * math.pi * 2
@@ -108,17 +125,13 @@ function wind(mote)
     local scale = 0.01
     local offset = mote.noiseOffset
     
-    -- Individual wind direction based on Perlin noise
-    local individualAngle = noise(mote.position.x * scale + offset, mote.position.y * scale + offset) * math.pi * 2
-    local individualWindForce = vec2(math.cos(individualAngle), math.sin(individualAngle))
+    -- Adjust coordinates for Perlin noise to wrap around smoothly
+    local adjustedX = (mote.position.x % WIDTH) / WIDTH
+    local adjustedY = (mote.position.y % HEIGHT) / HEIGHT
     
-    -- Global wind direction
-    local globalWindForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
+    local angle = noise(adjustedX * scale + offset, adjustedY * scale + offset) * math.pi * 2
+    local windForce = vec2(math.cos(angle), math.sin(angle))
     
-    -- Blend individual and global wind forces
-    local windForce = individualWindForce * 0.8 + globalWindForce * 0.2
-    
-    -- Random adjustment
     local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
     windForce = windForce + randomAdjustment
     
@@ -127,6 +140,7 @@ function wind(mote)
     
     return newPosition, newVelocity
 end
+
 
 
 -- Limit the magnitude of a vector
@@ -178,22 +192,7 @@ function checkForNeighbors(mote)
     mote:applyForce(avoidanceForce)
 end
 
--- Global variables
-local motes = {}
 
-function setup()
-    -- Initialize motes
-    for i = 1, MOTE_COUNT do
-        table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
-    end
-    
-    -- Initialize a few Sun and Snowflake catalytes
-    for i = 1, 1 do  -- Adjust the number of Sun and Snowflake catalytes as needed
-        table.insert(motes, Sun(math.random(WIDTH), math.random(HEIGHT)))
-        table.insert(motes, Snowflake(math.random(WIDTH), math.random(HEIGHT)))
-    end
-    parameter.number("TIMESCALE", 0.1, 50, 15)  -- Slider from 0.1x to 5x speed
-end
 function draw()
     background(40, 40, 50)
     
