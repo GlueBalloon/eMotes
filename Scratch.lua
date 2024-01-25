@@ -96,3 +96,111 @@ function Mote:avoid(neighbors)
         return vec2(0, 0)
     end
 end
+
+function Mote:clump(neighbors)
+    local averagePosition = vec2(0, 0)
+    local total = 0
+    local stickinessFactor = 500  -- Increase this value to make motes stickier
+    
+    for _, neighbor in ipairs(neighbors) do
+        averagePosition = averagePosition + neighbor.position
+        total = total + 1
+    end
+    
+    if total > 0 then
+        averagePosition = averagePosition / total
+        local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed
+        local steeringForce = desiredVelocity - self.velocity
+        steeringForce = limit(steeringForce, self.maxForce) * stickinessFactor
+        return steeringForce
+    else
+        return vec2(0, 0)
+    end
+end
+
+function Mote:avoid(neighbors)
+    local avoidanceForce = vec2(0, 0)
+    local total = 0
+    local closeRange = MOTE_SIZE * 2  -- Adjust this to control how close motes can get
+    
+    for _, neighbor in ipairs(neighbors) do
+        local distance = self.position:dist(neighbor.position)
+        if distance < closeRange then
+            local pushAway = self.position - neighbor.position
+            pushAway = pushAway / (distance * distance)
+            avoidanceForce = avoidanceForce + pushAway
+            total = total + 1
+        end
+    end
+    
+    if total > 0 then
+        avoidanceForce = avoidanceForce / total
+        return limit(avoidanceForce, self.maxForce * 0.1)  -- Reduce the strength of avoidance
+    else
+        return vec2(0, 0)
+    end
+end
+
+function Mote:clump(neighbors)
+    local averagePosition = vec2(0, 0)
+    local total = 0
+    
+    for _, neighbor in ipairs(neighbors) do
+        averagePosition = averagePosition + neighbor.position
+        total = total + 1
+    end
+    
+    if total > 0 then
+        averagePosition = averagePosition / total
+        local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed
+        local steeringForce = desiredVelocity - self.velocity
+        steeringForce = limit(steeringForce, self.maxForce * 5)  -- Increase the force multiplier
+        return steeringForce * 200
+    else
+        return vec2(0, 0)
+    end
+end
+function wind(mote)
+    local scale_x = 1 / WIDTH
+    local scale_y = 1 / HEIGHT
+    local offset = mote.noiseOffset
+    
+    -- Individual wind direction based on Perlin noise with wrapping
+    local individualAngle = noise((mote.position.x * scale_x + offset) % 1, (mote.position.y * scale_y + offset) % 1) * math.pi * 2
+    local individualWindForce = vec2(math.cos(individualAngle), math.sin(individualAngle))
+    
+    -- Global wind direction
+    local globalWindForce = vec2(math.cos(WIND_ANGLE), math.sin(WIND_ANGLE))
+    
+    -- Blend individual and global wind forces
+    local windForce = individualWindForce * 0.8 + globalWindForce * 0.2
+    
+    -- Random adjustment
+    local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
+    windForce = windForce + randomAdjustment
+    
+    local newVelocity = limit(mote.velocity + windForce, mote.maxSpeed)
+    local newPosition = mote.position + newVelocity
+    
+    return newPosition, newVelocity
+end
+-- Wind function using Perlin noise
+function wind(mote)
+    local scale = 0.01
+    local offset = mote.noiseOffset
+    
+    -- Adjust coordinates for Perlin noise to wrap around smoothly
+    local adjustedX = (mote.position.x % WIDTH) / WIDTH
+    local adjustedY = (mote.position.y % HEIGHT) / HEIGHT
+    
+    local angle = noise(adjustedX * scale + offset, adjustedY * scale + offset) * math.pi * 2
+    local windForce = vec2(math.cos(angle), math.sin(angle))
+    
+    local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
+    windForce = windForce + randomAdjustment
+    
+    local newVelocity = limit(mote.velocity + windForce, mote.maxSpeed)
+    local newPosition = mote.position + newVelocity
+    
+    return newPosition, newVelocity
+end

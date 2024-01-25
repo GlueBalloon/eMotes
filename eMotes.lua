@@ -10,7 +10,7 @@ function updateWindDirection()
 end
 
 -- Define gridSize for the grid
-local gridSize = 10  -- Adjust this value as needed
+local gridSize = 50  -- Adjust this value as needed
 
 -- Initialize the grid
 local grid = {}
@@ -24,9 +24,8 @@ function Mote:init(x, y)
     --self.maxSpeed = (math.random() < 0.5 and math.random() * 0.5 or math.random() * 0.02)
     self.maxSpeed = MOTE_SPEED_DEFAULT or 0.3
     self.noiseOffset = math.random() * 1000
-    self.perceptionRadius = math.min(WIDTH, HEIGHT) * 0.5 -- Adjust as needed
-    self.perceptionRadius = 6 -- Adjust as needed
-    self.maxForce = math.random() * 2 -- Adjust as needed
+    self.perceptionRadius = 16 -- Adjust as needed
+    self.maxForce = math.random() * 20 -- Adjust as needed
 end
 
 function Mote:update()
@@ -69,7 +68,7 @@ function Mote:clump(neighbors)
         -- Make the steering force stronger based on distance to average position
         local distance = self.position:dist(averagePosition)
         --  steeringForce = steeringForce * (distance / self.perceptionRadius)
-        steeringForce = steeringForce * (distance)
+        steeringForce = steeringForce * (distance) 
         return steeringForce
     else
         return vec2(0, 0)

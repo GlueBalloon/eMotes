@@ -8,9 +8,9 @@
 		<string>Boids</string>
 		<string>DustyBoids_Broken</string>
 		<string>PerlinMotes</string>
+		<string>PerlinClumpingMotes</string>
 		<string>eMotes</string>
 		<string>Scratch</string>
-		<string>PerlinClumpingMotes</string>
 	</array>
 </dict>
 </plist>
