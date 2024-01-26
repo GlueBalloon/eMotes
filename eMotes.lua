@@ -250,16 +250,25 @@ function Catalyte:init(x, y, effectRadius)
     self.effectRadius = effectRadius or 60
 end
 
+function Catalyte:fadingColorEffect(mote, aColor)
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance * 1.25 / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, aColor, intensity)
+    end
+end
+
 -- Sun class
 Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(255, 200, 0)  -- Warm color for the su
+    self.color = color(255, 242, 0)  -- Warm color for the su
+    self.effectColor = color(227, 54, 10)  -- Warm color for the su
 end
 
 function Sun:applyEffect(mote)
-    mote.color = self.color
+    mote.color = self.effectColor
 end
 
 function Sun:undoEffect(mote)
@@ -278,7 +287,8 @@ Snowflake = class(Catalyte)
 
 function Snowflake:init(x, y)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(0, 200, 255)  -- Cold color for the snowflake
+    self.color = color(0, 255, 252)  -- Cold color for the snowflake
+    self.effectColor = color(46, 128, 241)  -- 
 end
 
 function Snowflake:applyEffect(mote)
@@ -294,4 +304,24 @@ function Snowflake:draw()
     fill(self.color)
     ellipse(self.position.x, self.position.y, MOTE_SIZE)
     popStyle()
+end
+
+function Sun:applyEffect(mote)
+    self:fadingColorEffect(mote, self.effectColor)
+    if true then return end
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance * 1.25 / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, self.effectColor, intensity)
+    end
+end
+
+function Snowflake:applyEffect(mote)
+    self:fadingColorEffect(mote, self.effectColor)
+    if true then return end
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, self.color, intensity)
+    end
 end
