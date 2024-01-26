@@ -1,6 +1,6 @@
 MOTE_SIZE = 5
 MOTE_COUNT = 2000
-MOTE_SPEED_DEFAULT = 0.4
+MOTE_SPEED_DEFAULT = 0.5
 TIMESCALE = 1
 WIND_ANGLE = 0
 
@@ -264,7 +264,7 @@ Sun = class(Catalyte)
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
     self.color = color(255, 242, 0)  -- Warm color for the su
-    self.effectColor = color(227, 54, 10)  -- Warm color for the su
+    self.effectColor = color(230, 120, 92)  -- Warm color for the su
 end
 
 function Sun:applyEffect(mote)
@@ -288,7 +288,7 @@ Snowflake = class(Catalyte)
 function Snowflake:init(x, y)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
     self.color = color(0, 255, 252)  -- Cold color for the snowflake
-    self.effectColor = color(46, 128, 241)  -- 
+    self.effectColor = color(94, 151, 230)  -- 
 end
 
 function Snowflake:applyEffect(mote)
