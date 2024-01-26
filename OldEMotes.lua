@@ -1,7 +1,7 @@
-MOTE_SIZE = 5
+MOTE_SIZE = 6
 MOTE_COUNT = 2000
-MOTE_SPEED_DEFAULT = 0.4
-TIMESCALE = 1
+MOTE_SPEED_DEFAULT = 0.1
+TIMESCALE = 100
 WIND_ANGLE = 0
 
 -- Global variables
@@ -18,7 +18,7 @@ function setup()
         table.insert(motes, Sun(math.random(WIDTH), math.random(HEIGHT)))
         table.insert(motes, Snowflake(math.random(WIDTH), math.random(HEIGHT)))
     end
-    parameter.number("TIMESCALE", 0.1, 50, TIMESCALE)  -- Slider from 0.1x to 5x speed
+    parameter.number("TIMESCALE", 0.1, 50, 3)  -- Slider from 0.1x to 5x speed
 end
 
 function updateWindDirection()
@@ -43,9 +43,6 @@ function Mote:init(x, y)
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = 16 -- Adjust as needed
     self.maxForce = math.random() * 20 -- Adjust as needed
-    self.defaultColor = color(255, 255, 255)  -- Default color for motes
-    self.color = self.defaultColor
-    self.affectedBy = {}  -- Table to keep track of affecting catalytes
 end
 
 function Mote:update()
@@ -60,36 +57,10 @@ function Mote:update()
     -- Screen wrapping
     self.position.x = (self.position.x + WIDTH) % WIDTH
     self.position.y = (self.position.y + HEIGHT) % HEIGHT
-
-    self:applyCatalytes(motes)
-end
-
-function Mote:applyCatalytes(motes)
-    --skip if this mote is a catakyte itself
-    if self.applyEffect then return end
-    --apply affects and track currentlyAffecting
-    local currentAffecting = {}
-    for _, mote in ipairs(motes) do
-        if mote.applyEffect and self.position:dist(mote.position) < mote.effectRadius then
-            mote:applyEffect(self)
-            currentAffecting[mote] = true
-        end
-    end
-    --undo effects from catalytes not currently affecting
-    for mote, _ in pairs(self.affectedBy) do
-        if not currentAffecting[mote] then
-            mote:undoEffect(self)
-        end
-    end
-    --update affectedBy
-    self.affectedBy = currentAffecting
 end
 
 function Mote:draw()
-    pushStyle()
-    fill(self.color)
     ellipse(self.position.x, self.position.y, MOTE_SIZE)
-    popStyle()
 end
 
 function Mote:applyForce(force)
@@ -143,6 +114,10 @@ function Mote:avoid(neighbors)
     else
         return vec2(0, 0)
     end
+end
+
+function Mote:affectNeighbors(neighbors)
+    -- Default implementation does nothing
 end
 
 -- Wind function using Perlin noise
@@ -242,56 +217,60 @@ function touched(touch)
 end
 
 
--- Catalyte class
+-- Catalyte class as a subclass of Mote
 Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
-    Mote.init(self, x, y)  -- Adjust effect radius as needed
-    self.effectRadius = effectRadius or 60
+    Mote.init(self, x, y)
+    self.effectRadius = effectRadius
 end
 
--- Sun class
+function Catalyte:affectNeighbors(neighbors)
+    for _, neighbor in ipairs(neighbors) do
+        if neighbor.position:dist(self.position) < self.effectRadius then
+            self:applyEffectToMote(neighbor)
+        end
+    end
+end
+
 Sun = class(Catalyte)
 
-function Sun:init(x, y, effectRadius)
-    Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(255, 200, 0)  -- Warm color for the su
+function Sun:init(x, y)
+    Catalyte.init(self, x, y, 100)
+    self.maxSpeed = MOTE_SPEED_DEFAULT * 2
 end
 
-function Sun:applyEffect(mote)
-    mote.color = self.color
-end
-
-function Sun:undoEffect(mote)
-    mote.color = mote.defaultColor
+function Sun:applyEffectToMote(mote)
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        mote.isWarm = true
+    end
 end
 
 function Sun:draw()
     pushStyle()
-    fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE)
+    fill(255, 255, 0)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE * 3)
     popStyle()
 end
 
--- Snowflake class
 Snowflake = class(Catalyte)
 
 function Snowflake:init(x, y)
-    Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(0, 200, 255)  -- Cold color for the snowflake
+    Catalyte.init(self, x, y, 100)
+    self.maxSpeed = MOTE_SPEED_DEFAULT * 5
 end
 
-function Snowflake:applyEffect(mote)
-    mote.color = self.color
-end
-
-function Snowflake:undoEffect(mote)
-    mote.color = mote.defaultColor
+function Snowflake:applyEffectToMote(mote)
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        mote.isCold = true
+    end
 end
 
 function Snowflake:draw()
     pushStyle()
-    fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE)
+    fill(0, 255, 255)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE * 3)
     popStyle()
 end
