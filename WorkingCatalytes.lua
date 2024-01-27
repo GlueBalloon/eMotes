@@ -1,6 +1,6 @@
-MOTE_SIZE = 6
-MOTE_COUNT = 2000
-MOTE_SPEED_DEFAULT = 0.1
+MOTE_SIZE = 5
+MOTE_COUNT = 1000
+MOTE_SPEED_DEFAULT = 0.5
 TIMESCALE = 1
 WIND_ANGLE = 0
 
@@ -10,7 +10,7 @@ local motes = {}
 function setup()
     -- Initialize motes
     for i = 1, MOTE_COUNT do
-        table.insert(motes, Mote())
+        table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
     
     -- Initialize a few Sun and Snowflake catalytes
@@ -27,7 +27,7 @@ function updateWindDirection()
 end
 
 -- Define gridSize for the grid
-local gridSize = 10  -- Adjust this value as needed
+local gridSize = 50  -- Adjust this value as needed
 
 -- Initialize the grid
 local grid = {}
@@ -36,13 +36,12 @@ local grid = {}
 Mote = class()
 
 function Mote:init(x, y)
-    local x = x or math.random(WIDTH)
-    local y = y or math.random(HEIGHT)
     self.position = vec2(x, y)
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
+    --self.maxSpeed = (math.random() < 0.5 and math.random() * 0.5 or math.random() * 0.02)
     self.maxSpeed = MOTE_SPEED_DEFAULT or 0.3
     self.noiseOffset = math.random() * 1000
-    self.perceptionRadius = 70 -- Adjust as needed
+    self.perceptionRadius = 16 -- Adjust as needed
     self.maxForce = math.random() * 20 -- Adjust as needed
     self.defaultColor = color(255, 255, 255)  -- Default color for motes
     self.color = self.defaultColor
@@ -51,10 +50,6 @@ end
 
 function Mote:update()
     local newPosition, newVelocity = wind(self)
-    
-    -- Apply a small random jitter to keep the clumps moving
-    local jitter = vec2(math.random() * 0.1 - 0.05, math.random() * 0.1 - 0.05)
-    newVelocity = newVelocity + jitter
     
     -- Apply time scale to the velocity
     newVelocity = newVelocity * TIMESCALE
@@ -66,49 +61,13 @@ function Mote:update()
     self.position.x = (self.position.x + WIDTH) % WIDTH
     self.position.y = (self.position.y + HEIGHT) % HEIGHT
     
-    --[[
-    -- Find neighbors and apply forces
-    local nearby = self:findNeighbors()
-    local clumpForce = self:clump(nearby)    
-    self:applyForce(clumpForce)
-    ]]
-    
-    -- Apply effects from Catalytes
- --   self:applyCatalytes(motes)
-end
-
-
-function Mote:draw()
-    ellipse(self.position.x, self.position.y, MOTE_SIZE)
-end
-
-function findNeighbors(mote)
-    local gridX = math.floor(mote.position.x / gridSize) + 1
-    local gridY = math.floor(mote.position.y / gridSize) + 1
-    local neighbors = {}
-    
-    for dx = -1, 1 do
-        for dy = -1, 1 do
-            local x = gridX + dx
-            local y = gridY + dy
-            if x > 0 and x <= math.ceil(WIDTH / gridSize) and y > 0 and y <= math.ceil(HEIGHT / gridSize) then
-                local cell = grid[x] and grid[x][y]
-                if cell then
-                    for _, neighbor in ipairs(cell) do
-                        if neighbor ~= mote and mote.position:dist(neighbor.position) < MOTE_SIZE then
-                            table.insert(neighbors, neighbor)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    local clumpForce = mote:clump(neighbors)    
-    mote:applyForce(clumpForce)
-    --return neighbors
+    self:applyCatalytes(motes)
 end
 
 function Mote:applyCatalytes(motes)
+    --skip if this mote is a catakyte itself
+    if self.applyEffect then return end
+    --apply affects and track currentlyAffecting
     local currentAffecting = {}
     for _, mote in ipairs(motes) do
         if mote.applyEffect and self.position:dist(mote.position) < mote.effectRadius then
@@ -116,14 +75,21 @@ function Mote:applyCatalytes(motes)
             currentAffecting[mote] = true
         end
     end
-    
+    --undo effects from catalytes not currently affecting
     for mote, _ in pairs(self.affectedBy) do
         if not currentAffecting[mote] then
             mote:undoEffect(self)
         end
     end
-    
+    --update affectedBy
     self.affectedBy = currentAffecting
+end
+
+function Mote:draw()
+    pushStyle()
+    fill(self.color)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE)
+    popStyle()
 end
 
 function Mote:applyForce(force)
@@ -133,8 +99,6 @@ end
 function Mote:clump(neighbors)
     local averagePosition = vec2(0, 0)
     local total = 0
-    local stickinessFactor = 500 -- Adjust this value for stronger clumping
-    local minDistance = MOTE_SIZE * 1.5  -- Minimum distance to start reducing clumping force
     
     for _, neighbor in ipairs(neighbors) do
         averagePosition = averagePosition + neighbor.position
@@ -143,18 +107,39 @@ function Mote:clump(neighbors)
     
     if total > 0 then
         averagePosition = averagePosition / total
-        local difference = averagePosition - self.position
-        local distance = difference:len()
-        local desiredVelocity = difference:normalize() * self.maxSpeed
-        
-        -- Reduce clumping force as motes get very close
-        if distance < minDistance then
-            local reductionFactor = distance / minDistance
-            desiredVelocity = desiredVelocity * reductionFactor
-        end
-        
+        local desiredVelocity = (averagePosition - self.position):normalize() * self.maxSpeed
         local steeringForce = desiredVelocity - self.velocity
-        return limit(steeringForce, self.maxForce) * stickinessFactor
+        steeringForce = limit(steeringForce, self.maxForce)
+        
+        -- Make the steering force stronger based on distance to average position
+        local distance = self.position:dist(averagePosition)
+        --  steeringForce = steeringForce * (distance / self.perceptionRadius)
+        steeringForce = steeringForce * (distance) 
+        return steeringForce
+    else
+        return vec2(0, 0)
+    end
+end
+
+function Mote:avoid(neighbors)
+    local avoidanceForce = vec2(0, 0)
+    local total = 0
+    local avoidanceRadius = MOTE_SIZE  -- Adjust as needed
+    
+    for _, neighbor in ipairs(neighbors) do
+        local distance = self.position:dist(neighbor.position)
+        if distance < avoidanceRadius then
+            local pushAway = self.position - neighbor.position
+            pushAway = pushAway / (distance * distance)  -- Increase repulsion for closer motes
+            avoidanceForce = avoidanceForce + pushAway
+            total = total + 1
+        end
+    end
+    
+    if total > 0 then
+        avoidanceForce = avoidanceForce / total
+        avoidanceForce = avoidanceForce * 0.1  -- Adjust the strength of avoidance
+        return limit(avoidanceForce, self.maxForce)
     else
         return vec2(0, 0)
     end
@@ -202,6 +187,37 @@ function updateGrid(mote)
     table.insert(grid[gridX][gridY], mote)
 end
 
+-- Check for neighbors function
+function checkForNeighbors(mote)
+    local gridX = math.floor(mote.position.x / gridSize) + 1
+    local gridY = math.floor(mote.position.y / gridSize) + 1
+    local neighbors = {}
+    
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            local x = gridX + dx
+            local y = gridY + dy
+            if x > 0 and x <= math.ceil(WIDTH / gridSize) and y > 0 and y <= math.ceil(HEIGHT / gridSize) then
+                local cell = grid[x] and grid[x][y]
+                if cell then
+                    for _, neighbor in ipairs(cell) do
+                        if neighbor ~= mote and mote.position:dist(neighbor.position) < MOTE_SIZE then
+                            table.insert(neighbors, neighbor)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    local clumpForce = mote:clump(neighbors)
+    local avoidanceForce = mote:avoid(neighbors)
+    
+    mote:applyForce(clumpForce)
+    mote:applyForce(avoidanceForce)
+end
+
+
 function draw()
     background(40, 40, 50)
     
@@ -211,10 +227,8 @@ function draw()
     updateWindDirection()
     
     for i, mote in ipairs(motes) do
-        print(mote)
         updateGrid(mote)
-        -- Find neighbors and apply forces
-        findNeighbors(mote)
+        checkForNeighbors(mote)
         mote:update()
         mote:draw()
     end
@@ -236,16 +250,25 @@ function Catalyte:init(x, y, effectRadius)
     self.effectRadius = effectRadius or 60
 end
 
+function Catalyte:fadingColorEffect(mote, aColor)
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance * 1.25 / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, aColor, intensity)
+    end
+end
+
 -- Sun class
 Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(255, 200, 0)  -- Warm color for the su
+    self.color = color(255, 242, 0)  -- Warm color for the su
+    self.effectColor = color(230, 120, 92)  -- Warm color for the su
 end
 
 function Sun:applyEffect(mote)
-    mote.color = self.color
+    mote.color = self.effectColor
 end
 
 function Sun:undoEffect(mote)
@@ -255,7 +278,7 @@ end
 function Sun:draw()
     pushStyle()
     fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE * 3)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE)
     popStyle()
 end
 
@@ -264,7 +287,8 @@ Snowflake = class(Catalyte)
 
 function Snowflake:init(x, y)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(0, 200, 255)  -- Cold color for the snowflake
+    self.color = color(0, 255, 252)  -- Cold color for the snowflake
+    self.effectColor = color(94, 151, 230)  -- 
 end
 
 function Snowflake:applyEffect(mote)
@@ -278,6 +302,26 @@ end
 function Snowflake:draw()
     pushStyle()
     fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE * 3)
+    ellipse(self.position.x, self.position.y, MOTE_SIZE)
     popStyle()
+end
+
+function Sun:applyEffect(mote)
+    self:fadingColorEffect(mote, self.effectColor)
+    if true then return end
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance * 1.25 / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, self.effectColor, intensity)
+    end
+end
+
+function Snowflake:applyEffect(mote)
+    self:fadingColorEffect(mote, self.effectColor)
+    if true then return end
+    local distance = mote.position:dist(self.position)
+    if distance < self.effectRadius then
+        local intensity = 1 - (distance / self.effectRadius)
+        mote.color = blendColor(mote.defaultColor, self.color, intensity)
+    end
 end

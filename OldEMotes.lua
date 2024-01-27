@@ -1,7 +1,7 @@
-MOTE_SIZE = 6
-MOTE_COUNT = 2000
-MOTE_SPEED_DEFAULT = 0.1
-TIMESCALE = 100
+MOTE_SIZE = 3
+MOTE_COUNT = 3000
+MOTE_SPEED_DEFAULT = 0.5
+TIMESCALE = 1
 WIND_ANGLE = 0
 
 -- Global variables
@@ -18,7 +18,7 @@ function setup()
         table.insert(motes, Sun(math.random(WIDTH), math.random(HEIGHT)))
         table.insert(motes, Snowflake(math.random(WIDTH), math.random(HEIGHT)))
     end
-    parameter.number("TIMESCALE", 0.1, 50, 3)  -- Slider from 0.1x to 5x speed
+    parameter.number("TIMESCALE", 0.1, 50, TIMESCALE)  -- Slider from 0.1x to 5x speed
 end
 
 function updateWindDirection()

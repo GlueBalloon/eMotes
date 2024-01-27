@@ -161,7 +161,7 @@ function checkForNeighbors(mote)
                 local cell = grid[x] and grid[x][y]
                 if cell then
                     for _, neighbor in ipairs(cell) do
-                        if neighbor ~= mote and mote.position:dist(neighbor.position) < MOTE_SIZE then
+                        if neighbor ~= mote and mote.position:dist(neighbor.position) < gridSize then
                             table.insert(neighbors, neighbor)
                         end
                     end

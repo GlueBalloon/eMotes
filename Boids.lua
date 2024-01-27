@@ -92,7 +92,7 @@ end
 
 -- Global variables
 local boids = {}
-local numBoids = 300
+local numBoids = 500
 
 function setup()
     for i = 1, numBoids do

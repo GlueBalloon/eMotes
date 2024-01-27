@@ -6,13 +6,12 @@
 	<array>
 		<string>Main</string>
 		<string>Boids</string>
-		<string>DustyBoids_Broken</string>
 		<string>PerlinMotes</string>
 		<string>PerlinClumpingMotes</string>
-		<string>OldEMotes</string>
-		<string>bad_eMotes</string>
-		<string>eMotes</string>
 		<string>Scratch</string>
+		<string>OldEMotes</string>
+		<string>WorkingCatalytes</string>
+		<string>eMotes</string>
 	</array>
 </dict>
 </plist>
