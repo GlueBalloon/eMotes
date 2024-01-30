@@ -7,17 +7,20 @@ MOTE_SPEED_DEFAULT = 0.5
 
 -- Global variables
 local motes = {}
+local currentGrid = {}
+local nextGrid = {}
+
 
 function setup()
+    sun = Sun()
+    snowflake = Snowflake()
+    table.insert(motes, sun)
+    table.insert(motes, snowflake)
     for i = 1, MOTE_COUNT do
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
     testNeighborDetection()
     testWrappedNeighbors()
-    sun = Sun()
-    snowflake = Snowflake()
-    table.insert(motes, sun)
-    table.insert(motes, snowflake)
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
 end
 
@@ -90,9 +93,13 @@ end
 function Mote:applyCatalytes()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
+
     -- Apply effects from current affecting catalytes
     for catalyte, _ in pairs(self.currentAffecting) do
         catalyte:applyEffect(self)
+        if self.isTouchBorn then
+            print("touchBorn applied catalyte")
+        end
     end
     
     -- Remove effects from no longer affecting catalytes
@@ -206,6 +213,15 @@ function updateGrid(mote)
     table.insert(grid[gridX][gridY], mote)
 end
 
+function updateGrid(mote)
+    local gridX = math.floor(mote.position.x / gridSize) + 1
+    local gridY = math.floor(mote.position.y / gridSize) + 1
+    
+    nextGrid[gridX] = nextGrid[gridX] or {}
+    nextGrid[gridX][gridY] = nextGrid[gridX][gridY] or {}
+    table.insert(nextGrid[gridX][gridY], mote)
+end
+
 -- Check for neighbors function
 --[[
 function checkForNeighbors(mote)
@@ -260,15 +276,35 @@ function draw()
     end
 end
 
+function draw()
+    background(40, 40, 50)
+    
+    -- Clear the nextGrid for the next frame
+    nextGrid = {}
+    
+    updateWindDirection()
+    
+    for i, mote in ipairs(motes) do
+        updateGrid(mote)
+        checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
+        mote:update()
+        mote:draw()
+    end
+    
+    -- Swap grids
+    currentGrid, nextGrid = nextGrid, currentGrid
+end
+
 function touched(touch)
     if touch.state == BEGAN or touch.state == MOVING then
         local newMote = Mote(touch.x, touch.y)
         newMote.isTouchBorn = true
-        table.insert(motes, newMote)
+        table.insert(motes, 1, newMote)
     end
 end
 
-function checkForNeighbors(mote)
+printCount = 0
+function checkForNeighbors(mote, grid)
     local checkRadius = gridSize
     if mote.effectRadius and mote.effectRadius > gridSize then
         checkRadius = mote.effectRadius
@@ -289,18 +325,17 @@ function checkForNeighbors(mote)
             local cell = grid[x] and grid[x][y]
             if cell then
                 for _, neighbor in ipairs(cell) do
-                    if neighbor ~= mote and isNeighbor(mote, neighbor, checkRadius) then
+                    if printCount < 10 then
+                        if mote.isTouchBorn and neighbor.registerWith then
+                            printCount = printCount + 1
+                            print("mote is touchBorn, neighbor catalyte!")
+                        elseif mote.registerWith and neighbor.isTouchBorn then
+                            printCount = printCount + 1
+                            print("mote is catalyte, neighbor touchBorn!")           
+                        end
+                    end
+                        if neighbor ~= mote and isNeighbor(mote, neighbor, checkRadius) then
                         table.insert(neighbors, neighbor)
-                        if neighbor.isTouchBorn then
-                            print("loop isTouchBorn")
-                        end
-                        if mote.effectRadius then
-                            if neighbor.isTouchBorn then
-                                print("effect isTouchBorn")
-                            end
-                            mote:applyEffect(neighbor)
-                            neighbor.currentAffecting[mote] = true
-                        end
                     end
                 end
             end
@@ -314,14 +349,14 @@ function checkForNeighbors(mote)
     mote:applyForce(avoidanceForce)
     
     -- If the mote is a Catalyte, affect its neighbors
-    if mote.affectNeighbors then
-       -- mote:affectNeighbors(neighbors)
+    if mote.registerWith then
+        mote:registerWith(neighbors)
     end
     
     return neighbors
 end
 
-function isNeighbor(mote1, mote2, gridSize)
+function isNeighbor(mote1, mote2, searchRadius)
     local dx = math.abs(mote1.position.x - mote2.position.x)
     local dy = math.abs(mote1.position.y - mote2.position.y)
     
@@ -329,7 +364,14 @@ function isNeighbor(mote1, mote2, gridSize)
     dx = math.min(dx, WIDTH - dx)
     dy = math.min(dy, HEIGHT - dy)
     
-    return math.sqrt(dx * dx + dy * dy) < gridSize
+    local result = math.sqrt(dx * dx + dy * dy) < searchRadius
+    if mote1.registerWith and printCount > 1 and printCount < 10 then
+        print("catalyte: ", mote1.position)
+        if mote2.isTouchBorn then
+            print("touchBorn: ", mote2.position, result)
+        end
+    end
+    return result
 end
 
 -- Wind function using Perlin noise
@@ -362,10 +404,10 @@ function Catalyte:init(x, y, effectRadius)
     self.effectRadius = effectRadius or MOTE_SIZE * 8
 end
 
-function Catalyte:affectNeighbors(neighbors)
+function Catalyte:registerWith(neighbors)
     for _, neighbor in ipairs(neighbors) do
         --     if neighbor.position:dist(self.position) < self.effectRadius then
-        self:applyEffect(neighbor)
+      --  self:applyEffect(neighbor)
         neighbor.currentAffecting[self] = true
         if neighbor.isTouchBorn then
             print("affectNeighbors isTouchBorn")

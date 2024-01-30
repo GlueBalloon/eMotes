@@ -8,42 +8,6 @@ WIND_ANGLE = 0
 gridSize = 50  -- Adjust this value as needed
 grid = {}
 
-function testNeighborDetection()
-    -- Create test motes
-    local testMotes = {
-        Mote(100, 100),  -- Mote 1
-        Mote(105, 100),  -- Mote 2, close to Mote 1
-        Mote(300, 300),  -- Mote 3, far from Mote 1 and 2
-    }
-    
-    -- Clear the grid
-    grid = {}
-    
-    -- Update grid with test motes
-    for _, mote in ipairs(testMotes) do
-        updateGrid(mote)
-        --       print("Updated grid for mote at " .. tostring(mote.position))
-    end
-    
-    -- Check grid contents (Debugging)
-    for x, col in pairs(grid) do
-        for y, cell in pairs(col) do
-            --            print("Grid cell [" .. x .. "," .. y .. "] has " .. #cell .. " motes.")
-        end
-    end
-    
-    -- Run neighbor detection for each mote
-    for _, mote in ipairs(testMotes) do
-        local neighbors = checkForNeighbors(mote)
-        
-        -- Print results for debugging
-        print("Mote at " .. tostring(mote.position) .. " has " .. #neighbors .. " neighbors.")
-        for _, neighbor in ipairs(neighbors) do
-            print(" - Neighbor at " .. tostring(neighbor.position))
-        end
-    end
-end
-
 -- Global variables
 local motes = {}
 

@@ -8,6 +8,7 @@ WIND_ANGLE = 0
 gridSize = 10  -- Adjust this value as needed
 grid = {}
 
+--[[
 function testNeighborDetection()
     -- Create test motes
     local testMotes = {
@@ -34,7 +35,7 @@ function testNeighborDetection()
     
     -- Run neighbor detection for each mote
     for _, mote in ipairs(testMotes) do
-        local neighbors = checkForNeighbors(mote)
+        local neighbors = checkForNeighbors(mote, grid)
         
         -- Print results for debugging
         print("Mote at " .. tostring(mote.position) .. " has " .. #neighbors .. " neighbors.")
@@ -43,6 +44,7 @@ function testNeighborDetection()
         end
     end
 end
+]]
 
 -- Global variables
 local motes = {}

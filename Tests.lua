@@ -32,7 +32,7 @@ function testNeighborDetection()
     
     -- Run neighbor detection for each mote
     for _, mote in ipairs(testMotes) do
-        local neighbors = checkForNeighbors(mote)
+        local neighbors = checkForNeighbors(mote, grid)
         
         -- Print results for debugging
         print("Mote at " .. tostring(mote.position) .. " has " .. #neighbors .. " neighbors.")
@@ -44,6 +44,7 @@ end
     
 function testWrappedNeighbors()
     -- Setup
+    local currentGrid = {}
     local testMotes = {}
     local screenSize = vec2(WIDTH, HEIGHT)
     local testGridSize = 50 -- Assuming this is the grid size used in your main code
@@ -60,7 +61,7 @@ function testWrappedNeighbors()
     -- Run checkForNeighbors on each mote
     for _, mote in ipairs(testMotes) do
         updateGrid(mote) -- Update grid for each mote
-        mote.neighbors = checkForNeighbors(mote) -- Check neighbors
+        mote.neighbors = checkForNeighbors(mote, currentGrid) -- Check neighbors
     end
     
     -- Check results
