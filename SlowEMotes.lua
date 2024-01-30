@@ -1,11 +1,11 @@
 PRINTALITTLETIME = 1.02
 MOTE_SIZE = 3
-MOTE_COUNT = 1500
-MOTE_SPEED_DEFAULT = 0.5
+MOTE_COUNT = 3000
+MOTE_SPEED_DEFAULT = 2
 TIMESCALE = 1
 WIND_ANGLE = 0
 -- Initialize the grid
-gridSize = 10  -- Adjust this value as needed
+gridSize = 50  -- Adjust this value as needed
 grid = {}
 
 function testNeighborDetection()
@@ -87,6 +87,18 @@ function Mote:init(x, y)
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
 end
 
+function Mote:updateAppearance()
+    --skip if this mote is a catalyte itself
+    if self.applyEffect then return end
+    if self.state == "hot" then
+        self.color = color(172, 100, 81) -- Hot color
+    elseif self.state == "cold" then
+        self.color = color(82, 111, 117) -- Cold color
+    else
+        self.color = self.defaultColor -- Normal color
+    end
+end
+
 function Mote:update()
     local newPosition, newVelocity = wind(self)
     
@@ -102,18 +114,6 @@ function Mote:update()
     
     self:applyCatalytes()
     self:updateAppearance()
-end
-
-function Mote:updateAppearance()
-    --skip if this mote is a catalyte itself
-    if self.applyEffect then return end
-    if self.state == "hot" then
-        self.color = color(172, 100, 81) -- Hot color
-    elseif self.state == "cold" then
-        self.color = color(82, 111, 117) -- Cold color
-    else
-        self.color = self.defaultColor -- Normal color
-    end
 end
 
 function Mote:applyCatalytes()
