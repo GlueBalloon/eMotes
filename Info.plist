@@ -10,8 +10,8 @@
 		<string>Main</string>
 		<string>SlowEMotes</string>
 		<string>OldPerlinClumping</string>
+		<string>alsoSlowEMotes</string>
 		<string>eMotes</string>
-		<string>PerlinClumpingFutzing</string>
 	</array>
 </dict>
 </plist>
