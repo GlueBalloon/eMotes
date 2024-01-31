@@ -21,7 +21,7 @@ Mote = class()
 function Mote:init(x, y)
     self.position = vec2(x, y)
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
-    self.maxSpeed = (math.random() < 0.5 and math.random() * 0.5 or math.random() * 0.2) * 2
+    self.maxSpeed = 1.0
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = math.min(WIDTH, HEIGHT) * 0.5 -- Adjust as needed
     self.perceptionRadius = 6 -- Adjust as needed

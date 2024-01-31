@@ -64,6 +64,7 @@ function setup()
     testNeighborDetection()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
+    parameter.boolean("zoomActive", true)
 end
 
 -- Zoom callback function
@@ -74,7 +75,7 @@ function zoomCallback(event)
     -- Calculate the midpoint of the two touches
     zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
     
-    local zoomChange = 1 + (event.dw + event.dh) / 100 -- Adjust the denominator to control zoom sensitivity
+    local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
     zoomLevel = zoomLevel * zoomChange
     zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
 end
@@ -92,11 +93,11 @@ end
 Mote = class()
 
 function Mote:init(x, y)
+    self.size = MOTE_SIZE
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
     self.maxSpeed = MOTE_SPEED_DEFAULT
     self.noiseOffset = math.random() * 1000
-    self.perceptionRadius = math.min(WIDTH, HEIGHT) * 0.5 -- Adjust as needed
     self.perceptionRadius = 6 -- Adjust as needed
     self.maxForce = math.random() * 2 -- Adjust as needed
     self.defaultColor = color(239, 178, 61) -- Default color for motes
@@ -178,8 +179,8 @@ function Mote:clump(neighbors)
         
         -- Make the steering force stronger based on distance to average position
         local distance = self.position:dist(averagePosition)
-        --  steeringForce = steeringForce * (distance / self.perceptionRadius)
-        steeringForce = steeringForce * (distance)
+        steeringForce = steeringForce * (distance / self.perceptionRadius)
+        --steeringForce = steeringForce * (distance)
         return steeringForce
     else
         return vec2(0, 0)
@@ -203,7 +204,7 @@ function Mote:avoid(neighbors)
     
     if total > 0 then
         avoidanceForce = avoidanceForce / total
-        avoidanceForce = avoidanceForce * 0.1  -- Adjust the strength of avoidance
+        avoidanceForce = avoidanceForce * 0.02  -- Adjust the strength of avoidance
         return limit(avoidanceForce, self.maxForce)
     else
         return vec2(0, 0)
