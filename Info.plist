@@ -4,9 +4,9 @@
 <dict>
 	<key>Buffer Order</key>
 	<array>
+		<string>OldPerlinClumpingKinda</string>
 		<string>Main</string>
 		<string>Tests_And_Sensor</string>
-		<string>OldPerlinClumpingKinda</string>
 		<string>eMotes</string>
 		<string>Scratch</string>
 	</array>
