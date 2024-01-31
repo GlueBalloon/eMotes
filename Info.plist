@@ -4,11 +4,12 @@
 <dict>
 	<key>Buffer Order</key>
 	<array>
-		<string>OldPerlinClumpingKinda</string>
-		<string>Main</string>
 		<string>Tests_And_Sensor</string>
-		<string>eMotes</string>
 		<string>Scratch</string>
+		<string>Main</string>
+		<string>eMotes</string>
+		<string>PerlinClumpingMain</string>
+		<string>OldPerlinClumpingKinda</string>
 	</array>
 </dict>
 </plist>

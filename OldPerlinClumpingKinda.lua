@@ -10,10 +10,10 @@ function updateWindDirection()
 end
 
 -- Define gridSize for the grid
-local gridSize = 10  -- Adjust this value as needed
+gridSize = 10  -- Adjust this value as needed
 
 -- Initialize the grid
-local grid = {}
+grid = {}
 
 -- Mote class
 Mote = class()
@@ -108,7 +108,11 @@ end
 
 
 function Mote:draw()
+    pushStyle()
+    fill(236, 212, 67)
     ellipse(self.position.x, self.position.y, MOTE_SIZE)
+    popStyle()
+   -- ellipse(self.position.x, self.position.y, MOTE_SIZE)
 end
 
 -- Wind function using Perlin noise

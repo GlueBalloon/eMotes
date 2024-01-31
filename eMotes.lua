@@ -126,61 +126,16 @@ function Mote:avoid(neighbors)
     end
 end
 
--- Mote drawing method
---[[
-function Mote:draw()
-pushStyle()
-fill(self.color)
-
-if zoomLevel > ZOOM_THRESHOLD then
-if self.state == "normal" then
-fill(255)
-end
--- Draw text emote
-fontSize(EMOJI_SIZE)
-local textWidth = textSize("😀")
-local textX = self.position.x - textWidth / 2
-local textY = self.position.y - EMOJI_SIZE / 2
-text("😀", textX, textY)
-else
--- Draw simple dot
-ellipse(self.position.x, self.position.y, MOTE_SIZE)
-end
-
-popStyle()
-end
-
-
-function Mote:draw(screenPos, zoomLevel)
-    pushStyle()
-    fill(self.color)
-    
-    if zoomLevel > ZOOM_THRESHOLD then
-        if self.state == "normal" then
-            fill(255)
-        end
-        -- Draw text emote
-        local textWidth = textSize("😀")
-        -- Calculate scaled font size based on zoom level
-        emojiSize = BASE_EMOJI_SIZE * (zoomLevel)
-        fontSize(emojiSize)
-        local textX = screenPos.x - textWidth / 2
-        local textY = screenPos.y - BASE_EMOJI_SIZE / 2
-        text("😀", textX, textY)
-    else
-        -- Draw simple dot
-        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
-    end
-    
-    popStyle()
-end
-]]
 -- Mote drawing function
 function Mote:draw(screenPos, zoomLevel)
     pushStyle()
     fill(self.color)
-    
-    if zoomLevel > ZOOM_THRESHOLD then
+   
+    if not zoomActive or not (zoomLevel > ZOOM_THRESHOLD) then
+        -- Draw simple dot
+        ellipse(self.position.x, self.position.y, MOTE_SIZE)   
+    else
+        
         if self.state == "normal" then
             fill(255)
         end
@@ -201,9 +156,6 @@ function Mote:draw(screenPos, zoomLevel)
         
         -- Draw text emote
         text("😀", textX, textY)
-    else
-        -- Draw simple dot
-        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
     end
     
     popStyle()
@@ -222,6 +174,7 @@ function draw()
     
     updateWindDirection()
     
+    if zoomActive then
     -- Apply zoom and pan
     local thisZoom = zoomLevel >= 1.0 and zoomLevel or 1.0
     pushMatrix()
@@ -243,6 +196,17 @@ function draw()
     end
     
     popMatrix()
+    else
+        for i, mote in ipairs(motes) do
+            updateGrid(mote)
+            checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
+            mote:update()
+            -- Calculate screen position for each mote
+            -- Draw mote at calculated screen position
+            mote:draw()
+            --mote:draw()
+        end
+    end
     
     -- Swap grids
     currentGrid, nextGrid = nextGrid, currentGrid
@@ -303,12 +267,13 @@ function checkForNeighbors(mote, grid)
         end
     end
     
-    local clumpForce = mote:clump(neighbors)
-    local avoidanceForce = mote:avoid(neighbors)
-    
-    mote:applyForce(clumpForce)
-    mote:applyForce(avoidanceForce)
-    
+    if clumpAndAvoid then
+        local clumpForce = mote:clump(neighbors)
+        local avoidanceForce = mote:avoid(neighbors)
+        
+        mote:applyForce(clumpForce)
+        mote:applyForce(avoidanceForce)
+    end
     -- If the mote is a Catalyte, affect its neighbors
     if mote.registerWith then
         mote:registerWith(neighbors)

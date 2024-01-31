@@ -64,22 +64,25 @@ function setup()
     testNeighborDetection()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
-    parameter.boolean("zoomActive", true)
+    parameter.boolean("zoomActive", false)
+    parameter.boolean("clumpAndAvoid", true)
 end
 
 -- Zoom callback function
 function zoomCallback(event)
-    local touch1 = event.touches[1]
-    local touch2 = event.touches[2]
-    
-    -- Calculate the midpoint of the two touches
-    zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
-    
-    local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
-    zoomLevel = zoomLevel * zoomChange
-    zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
+    if zoomActive then
+        local touch1 = event.touches[1]
+        local touch2 = event.touches[2]
+        
+        -- Calculate the midpoint of the two touches
+        zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
+        
+        local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
+        zoomLevel = zoomLevel * zoomChange
+        zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
+    end
 end
-
+    
 function updateWindDirection()
     -- Slowly change the wind direction over time
     WIND_ANGLE = noise(ElapsedTime * 0.1) * math.pi * 2
