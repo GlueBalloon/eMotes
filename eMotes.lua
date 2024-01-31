@@ -1,17 +1,59 @@
 MOTE_SIZE = 3
 MOTE_COUNT = 3000
--- Global time scale variable
 TIMESCALE = 1
 WIND_ANGLE = 0
 MOTE_SPEED_DEFAULT = 0.5
-
+BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
+ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
 -- Global variables
 local motes = {}
 local currentGrid = {}
 local nextGrid = {}
 local gridSize = 10  -- Adjust this value as needed
+local zoomLevel = 1.0
+local zoomOrigin = vec2(WIDTH / 2, HEIGHT / 2)
+local emojiSize = BASE_EMOJI_SIZE
+
+-- Function to check if a mote is visible on screen
+function isMoteVisible(mote)
+    -- Calculate the transformed position
+    local transformedX = (mote.position.x - zoomOrigin.x) * zoomLevel + zoomOrigin.x
+    local transformedY = (mote.position.y - zoomOrigin.y) * zoomLevel + zoomOrigin.y
+    
+    -- Check if the transformed position is within screen bounds
+    return transformedX >= 0 and transformedX <= WIDTH and transformedY >= 0 and transformedY <= HEIGHT
+end
+
+-- Function to calculate appropriate text size for emotes
+function calculateTextSize()
+    local targetWidth = MOTE_SIZE
+    local currentWidth = 0
+    local emote = "😀"  -- Example emote
+    
+    fontSize(BASE_EMOJI_SIZE)
+    currentWidth = textSize(emote)
+    
+    while false and math.abs(currentWidth - targetWidth) > 1 do
+        if currentWidth > targetWidth then
+            BASE_EMOJI_SIZE = BASE_EMOJI_SIZE - 0.1
+        else
+            BASE_EMOJI_SIZE = BASE_EMOJI_SIZE + 0.1
+        end
+        fontSize(TEXT_SIZE)
+        currentWidth = textSize(emote)
+    end
+    BASE_EMOJI_SIZE = BASE_EMOJI_SIZE * 0.85 -- artificial adjustment
+    emojiSize = BASE_EMOJI_SIZE
+    print(BASE_EMOJI_SIZE)
+end
 
 function setup()
+    screen = {x=0,y=0,w=WIDTH,h=HEIGHT} 
+    sensor = Sensor {parent=screen} -- tell the object you want to be listening to touches, here the screen
+    sensor:onZoom( zoomCallback )
+    
+    calculateTextSize()
+    
     sun = Sun()
     snowflake = Snowflake()
     table.insert(motes, sun)
@@ -22,6 +64,19 @@ function setup()
     testNeighborDetection()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
+end
+
+-- Zoom callback function
+function zoomCallback(event)
+    local touch1 = event.touches[1]
+    local touch2 = event.touches[2]
+    
+    -- Calculate the midpoint of the two touches
+    zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
+    
+    local zoomChange = 1 + (event.dw + event.dh) / 100 -- Adjust the denominator to control zoom sensitivity
+    zoomLevel = zoomLevel * zoomChange
+    zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
 end
 
 function updateWindDirection()
@@ -44,7 +99,9 @@ function Mote:init(x, y)
     self.perceptionRadius = math.min(WIDTH, HEIGHT) * 0.5 -- Adjust as needed
     self.perceptionRadius = 6 -- Adjust as needed
     self.maxForce = math.random() * 2 -- Adjust as needed
-    self.defaultColor = color(226, 224, 192)  -- Default color for motes
+    self.defaultColor = color(239, 178, 61) -- Default color for motes
+    self.defaultColor = color(216, 138, 49) -- Default color for motes
+    self.defaultColor = color(229, 205, 91)
     self.color = self.defaultColor
     self.currentAffecting = {}
     self.affectedBy = {}  -- Table to keep track of affecting catalytes
@@ -82,7 +139,7 @@ end
 function Mote:applyCatalytes()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
-
+    
     -- Apply effects from current affecting catalytes
     for catalyte, _ in pairs(self.currentAffecting) do
         catalyte:applyEffect(self)
@@ -121,7 +178,7 @@ function Mote:clump(neighbors)
         
         -- Make the steering force stronger based on distance to average position
         local distance = self.position:dist(averagePosition)
-      --  steeringForce = steeringForce * (distance / self.perceptionRadius)
+        --  steeringForce = steeringForce * (distance / self.perceptionRadius)
         steeringForce = steeringForce * (distance)
         return steeringForce
     else
@@ -132,7 +189,7 @@ end
 function Mote:avoid(neighbors)
     local avoidanceForce = vec2(0, 0)
     local total = 0
-    local avoidanceRadius = MOTE_SIZE  -- Adjust as needed
+    local avoidanceRadius = MOTE_SIZE * 2 -- Adjust as needed
     
     for _, neighbor in ipairs(neighbors) do
         local distance = self.position:dist(neighbor.position)
@@ -153,17 +210,127 @@ function Mote:avoid(neighbors)
     end
 end
 
-
+-- Mote drawing method
+--[[
 function Mote:draw()
+pushStyle()
+fill(self.color)
+
+if zoomLevel > ZOOM_THRESHOLD then
+if self.state == "normal" then
+fill(255)
+end
+-- Draw text emote
+fontSize(EMOJI_SIZE)
+local textWidth = textSize("😀")
+local textX = self.position.x - textWidth / 2
+local textY = self.position.y - EMOJI_SIZE / 2
+text("😀", textX, textY)
+else
+-- Draw simple dot
+ellipse(self.position.x, self.position.y, MOTE_SIZE)
+end
+
+popStyle()
+end
+
+
+function Mote:draw(screenPos, zoomLevel)
     pushStyle()
     fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE)
+    
+    if zoomLevel > ZOOM_THRESHOLD then
+        if self.state == "normal" then
+            fill(255)
+        end
+        -- Draw text emote
+        local textWidth = textSize("😀")
+        -- Calculate scaled font size based on zoom level
+        emojiSize = BASE_EMOJI_SIZE * (zoomLevel)
+        fontSize(emojiSize)
+        local textX = screenPos.x - textWidth / 2
+        local textY = screenPos.y - BASE_EMOJI_SIZE / 2
+        text("😀", textX, textY)
+    else
+        -- Draw simple dot
+        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
+    end
+    
+    popStyle()
+end
+]]
+-- Mote drawing function
+function Mote:draw(screenPos, zoomLevel)
+    pushStyle()
+    fill(self.color)
+    
+    if zoomLevel > ZOOM_THRESHOLD then
+        if self.state == "normal" then
+            fill(255)
+        end
+        
+        -- Calculate visible width at current zoom level
+        local visibleWidth = WIDTH / zoomLevel
+        
+        -- Calculate scaled font size based on visible width
+        local emojiRatio = BASE_EMOJI_SIZE / MOTE_SIZE  -- Original ratio of emoji size to screen width
+        local scaledFontSize = BASE_EMOJI_SIZE * emojiRatio
+        
+        fontSize(scaledFontSize * zoomLevel)
+        
+        -- Calculate text width for centering
+        local textWidth = textSize("😀")
+        local textX = screenPos.x - textWidth / 2
+        local textY = screenPos.y - scaledFontSize / 2
+        
+        -- Draw text emote
+        text("😀", textX, textY)
+    else
+        -- Draw simple dot
+        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
+    end
+    
     popStyle()
 end
 
 
 
 
+
+
+function draw()
+    background(40, 40, 50)
+    
+    -- Clear the nextGrid for the next frame
+    nextGrid = {}
+    
+    updateWindDirection()
+    
+    -- Apply zoom and pan
+    local thisZoom = zoomLevel >= 1.0 and zoomLevel or 1.0
+    pushMatrix()
+    translate(zoomOrigin.x, zoomOrigin.y)
+    scale(thisZoom)
+    translate(-zoomOrigin.x, -zoomOrigin.y)
+    
+    for i, mote in ipairs(motes) do
+        updateGrid(mote)
+        checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
+        mote:update()
+        if isMoteVisible(mote) then
+            -- Calculate screen position for each mote
+            local screenPos = (mote.position - zoomOrigin) * zoomLevel + zoomOrigin
+            -- Draw mote at calculated screen position
+            mote:draw(screenPos, zoomLevel)
+            --mote:draw()
+        end
+    end
+    
+    popMatrix()
+    
+    -- Swap grids
+    currentGrid, nextGrid = nextGrid, currentGrid
+end
 
 -- Limit the magnitude of a vector
 function limit(vec, max)
@@ -182,26 +349,8 @@ function updateGrid(mote)
     table.insert(nextGrid[gridX][gridY], mote)
 end
 
-function draw()
-    background(40, 40, 50)
-    
-    -- Clear the nextGrid for the next frame
-    nextGrid = {}
-    
-    updateWindDirection()
-    
-    for i, mote in ipairs(motes) do
-        updateGrid(mote)
-        checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
-        mote:update()
-        mote:draw()
-    end
-    
-    -- Swap grids
-    currentGrid, nextGrid = nextGrid, currentGrid
-end
-
 function touched(touch)
+    if sensor:touched(touch) then return true end
     if touch.state == BEGAN or touch.state == MOVING then
         local newMote = Mote(touch.x, touch.y)
         newMote.isTouchBorn = true
@@ -214,11 +363,11 @@ function checkForNeighbors(mote, grid)
     if mote.effectRadius and mote.effectRadius > gridSize then
         checkRadius = mote.effectRadius
     end
-
+    
     local gridX = math.floor(mote.position.x / gridSize) + 1
     local gridY = math.floor(mote.position.y / gridSize) + 1
     local neighbors = {}
-
+    
     -- Calculate the range of cells to check
     local cellsToCheck = math.ceil(checkRadius / gridSize)
     

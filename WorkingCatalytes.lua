@@ -263,8 +263,8 @@ Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)  -- Adjust effect radius as needed
-    self.color = color(255, 242, 0)  -- Warm color for the su
-    self.effectColor = color(230, 120, 92)  -- Warm color for the su
+    self.color = color(255)  -- Warm color for the su
+    self.effectColor = color(255, 15, 0)  -- Warm color for the su
 end
 
 function Sun:applyEffect(mote)

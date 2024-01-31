@@ -8,9 +8,10 @@
 		<string>Tests</string>
 		<string>Scratch</string>
 		<string>Main</string>
+		<string>TouchSensor</string>
 		<string>SlowEMotes</string>
-		<string>OldPerlinClumping</string>
 		<string>alsoSlowEMotes</string>
+		<string>OldPerlinClumping</string>
 		<string>eMotes</string>
 	</array>
 </dict>
