@@ -2,7 +2,7 @@ MOTE_SIZE = 3
 MOTE_COUNT = 3000
 TIMESCALE = 1
 WIND_ANGLE = 0
-MOTE_SPEED_DEFAULT = 1.0
+MOTE_SPEED_DEFAULT = 0.25
 BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
 ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
 -- Global variables
@@ -13,6 +13,9 @@ gridSize = 10  -- Adjust this value as needed
 zoomLevel = 1.0
 zoomOrigin = vec2(WIDTH / 2, HEIGHT / 2)
 emojiSize = BASE_EMOJI_SIZE
+lastTime = ElapsedTime
+frameCount = 0
+fps = 0
 
 -- Function to check if a mote is visible on screen
 function isMoteVisible(mote)
@@ -65,7 +68,8 @@ function setup()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
     parameter.boolean("zoomActive", false)
-    parameter.boolean("clumpAndAvoid", true)
+    parameter.boolean("clumpAndAvoid", false)
+    parameter.watch("fps")
 end
 
 -- Zoom callback function

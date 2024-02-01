@@ -3,6 +3,9 @@ MOTE_COUNT = 3000
 -- Global time scale variable
 TIMESCALE = 1
 WIND_ANGLE = 0
+lastTime = ElapsedTime
+frameCount = 0
+fps = 0
 
 function updateWindDirection()
     -- Slowly change the wind direction over time
@@ -20,8 +23,9 @@ Mote = class()
 
 function Mote:init(x, y)
     self.position = vec2(x, y)
-    self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
-    self.maxSpeed = 1.0
+    self.baseVelocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
+    self.velocity = self.baseVelocity
+    self.maxSpeed =  0.5
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = math.min(WIDTH, HEIGHT) * 0.5 -- Adjust as needed
     self.perceptionRadius = 6 -- Adjust as needed
@@ -106,6 +110,88 @@ function Mote:avoid(neighbors)
     end
 end
 
+function Mote:clump(neighbors)
+    return vec2(-#neighbors, -#neighbors)
+end
+function Mote:avoid(neighbors)
+    return vec2(0, 0)
+end
+
+function Mote:clump(neighbors)
+    local totalNeighbors = #neighbors
+    
+    -- Define a slowdown factor based on the number of neighbors
+    local slowdownFactor = 0.1 -- Adjust this value as needed
+    
+    -- Calculate the slowdown based on the number of neighbors
+    local slowdown = slowdownFactor * totalNeighbors
+    
+    -- Apply the slowdown to the current velocity
+    local reducedVelocity = self.velocity * (1 - slowdown)
+    
+    -- Ensure the slowdown doesn't reverse the direction
+    if reducedVelocity:len() < 0 then
+        reducedVelocity = vec2(0, 0)
+    end
+    
+    return vec2(1,1) * -slowdown
+end
+
+function Mote:clump(neighbors)
+    local slowdownFactor = 0.05 -- Adjust this value as needed
+    local totalNeighbors = #neighbors
+    
+    if totalNeighbors > 0 then
+        -- Reduce speed based on the number of neighbors
+        local speedReduction = slowdownFactor * totalNeighbors
+        local reducedSpeed = self.velocity * (1 - speedReduction)
+        return reducedSpeed - self.velocity
+    else
+        return vec2(0, 0)
+    end
+end
+
+
+function Mote:clump(neighbors)
+    local slowdownFactor = 0.9 -- Adjust this value as needed
+    local recoveryFactor = 0.01 -- Speed recovery rate
+    local randomnessFactor = 2 -- Adjust for more or less randomness
+    local totalNeighbors = #neighbors
+    
+    -- Randomness to make the motion less uniform
+    local randomAdjustment = vec2(math.random() * randomnessFactor - randomnessFactor / 2, math.random() * randomnessFactor - randomnessFactor / 2)
+    
+    if totalNeighbors > 0 then
+        -- Reduce speed based on the number of neighbors
+        local speedReduction = slowdownFactor * totalNeighbors
+        local reducedSpeed = self.velocity * (1 - speedReduction)
+        return (reducedSpeed + randomAdjustment) - self.velocity
+    else
+        -- Gradually restore speed towards baseVelocity
+        local speedRecovery = (self.baseVelocity - self.velocity) * recoveryFactor
+        return speedRecovery + randomAdjustment
+    end
+end
+
+function Mote:clump(neighbors)
+    if #neighbors > 0 then
+        -- Randomly select one neighbor
+        local selectedNeighbor = neighbors[math.random(#neighbors)]
+        
+        -- Adjust velocity based on the selected neighbor's velocity
+        -- This could be a simple assignment or a more complex calculation
+        local adjustmentFactor = 0.9  -- Adjust this factor as needed
+        self.velocity = lerp(self.velocity, selectedNeighbor.velocity, adjustmentFactor)
+    end
+    
+    return self.velocity
+end
+
+function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+
 
 function Mote:draw()
     pushStyle()
@@ -174,11 +260,13 @@ function checkForNeighbors(mote)
         end
     end
     
-    local clumpForce = mote:clump(neighbors)
-    local avoidanceForce = mote:avoid(neighbors)
-    
-    mote:applyForce(clumpForce)
-    mote:applyForce(avoidanceForce)
+    if clumpAndAvoid then
+        local clumpForce = mote:clump(neighbors)
+        local avoidanceForce = mote:avoid(neighbors)
+        
+        mote:applyForce(clumpForce)
+        mote:applyForce(avoidanceForce)
+    end
 end
 
 -- Global variables
@@ -189,11 +277,19 @@ function setup()
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
+    parameter.boolean("clumpAndAvoid", false)
+    parameter.watch("fps")
 end
 
 function draw()
     background(40, 40, 50)
-    
+    -- Calculate FPS every second
+    frameCount = frameCount + 1
+    if ElapsedTime - lastTime >= 1 then
+        fps = frameCount / (ElapsedTime - lastTime)
+        frameCount = 0
+        lastTime = ElapsedTime
+    end
     -- Clear the grid
     grid = {}
     

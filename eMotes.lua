@@ -11,12 +11,10 @@ function Mote:init(x, y)
     self.size = MOTE_SIZE
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
-    self.maxSpeed = MOTE_SPEED_DEFAULT
+    self.maxSpeed = (math.random() * 0.01) + MOTE_SPEED_DEFAULT
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = 6 -- Adjust as needed
     self.maxForce = math.random() * 2 -- Adjust as needed
-    self.defaultColor = color(239, 178, 61) -- Default color for motes
-    self.defaultColor = color(216, 138, 49) -- Default color for motes
     self.defaultColor = color(229, 205, 91)
     self.color = self.defaultColor
     self.currentAffecting = {}
@@ -38,15 +36,18 @@ function Mote:update()
     self.position.y = (self.position.y + HEIGHT) % HEIGHT
     self:applyCatalytes()
     self:updateAppearance()
+   -- if math.random(1, 1) == 1 then
+        --self.isClumping = not self.isClumping
+   -- end
 end
 
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
     if self.state == "hot" then
-        self.color = color(172, 100, 81) -- Hot color
+        self.color = color(228, 129, 104) -- Hot color
     elseif self.state == "cold" then
-        self.color = color(82, 111, 117) -- Cold color
+        self.color = color(199, 223, 227) -- Cold color
     else
         self.color = self.defaultColor -- Normal color
     end
@@ -126,6 +127,54 @@ function Mote:avoid(neighbors)
     end
 end
 
+function Mote:clump(neighbors)   
+    for _, neighbor in ipairs(neighbors) do
+    end
+    return vec2(0, 0)
+end
+
+function Mote:avoid(neighbors)
+    for _, neighbor in ipairs(neighbors) do
+    end
+    return vec2(0, 0)
+end
+
+function Mote:clump(neighbors)
+    if #neighbors > 0 then
+        -- Randomly select one neighbor
+        local selectedNeighbor = neighbors[math.random(#neighbors)]
+        
+        -- Adjust velocity based on the selected neighbor's velocity
+        -- This could be a simple assignment or a more complex calculation
+        local adjustmentFactor = 0.99  -- Adjust this factor as needed
+        self.velocity = lerp(self.velocity, selectedNeighbor.velocity, adjustmentFactor)
+    end
+    
+    return self.velocity
+end
+
+function Mote:clump(neighbors)
+    if not self.isClumping or #neighbors == 0 then
+        return vec2(0, 0)  -- No adjustment if not clumping or no neighbors
+    end
+    
+    -- Clump towards the first neighbor
+    local target = neighbors[1]
+    local adjustmentFactor = 5 -- Adjust as needed
+    local desiredVelocity = (target.position - self.position):normalize() * self.maxSpeed
+    local adjustment = (desiredVelocity - self.velocity) * adjustmentFactor
+    
+    return adjustment
+end
+
+function Mote:clump(neighbors)
+    if #neighbors == 0 then return end
+    
+    -- Set velocity to match the target's velocity exactly
+    self.velocity = neighbors[#neighbors].velocity
+end
+
+
 -- Mote drawing function
 function Mote:draw(screenPos, zoomLevel)
     pushStyle()
@@ -168,7 +217,14 @@ end
 
 function draw()
     background(40, 40, 50)
-    
+    -- Update frame count
+    frameCount = frameCount + 1
+    -- Calculate FPS every second
+    if ElapsedTime - lastTime >= 1 then
+        fps = frameCount / (ElapsedTime - lastTime)
+        frameCount = 0
+        lastTime = ElapsedTime
+    end
     -- Clear the nextGrid for the next frame
     nextGrid = {}
     
@@ -269,10 +325,10 @@ function checkForNeighbors(mote, grid)
     
     if clumpAndAvoid then
         local clumpForce = mote:clump(neighbors)
-        local avoidanceForce = mote:avoid(neighbors)
+       -- local avoidanceForce = mote:avoid(neighbors)
         
-        mote:applyForce(clumpForce)
-        mote:applyForce(avoidanceForce)
+        --mote:applyForce(clumpForce)
+   --     mote:applyForce(avoidanceForce)
     end
     -- If the mote is a Catalyte, affect its neighbors
     if mote.registerWith then
