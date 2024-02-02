@@ -2,7 +2,7 @@ MOTE_SIZE = 3
 MOTE_COUNT = 3000
 TIMESCALE = 1
 WIND_ANGLE = 0
-MOTE_SPEED_DEFAULT = 1.0
+MOTE_SPEED_DEFAULT = 0.25
 BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
 ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
 -- Global variables
@@ -13,6 +13,9 @@ gridSize = 10  -- Adjust this value as needed
 zoomLevel = 1.0
 zoomOrigin = vec2(WIDTH / 2, HEIGHT / 2)
 emojiSize = BASE_EMOJI_SIZE
+lastTime = ElapsedTime
+frameCount = 0
+fps = 0
 
 -- Function to check if a mote is visible on screen
 function isMoteVisible(mote)
@@ -64,20 +67,24 @@ function setup()
     testNeighborDetection()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
-    parameter.boolean("zoomActive", true)
+    parameter.boolean("zoomActive", false)
+    parameter.boolean("clumpAndAvoid", false)
+    parameter.watch("fps")
 end
 
 -- Zoom callback function
 function zoomCallback(event)
-    local touch1 = event.touches[1]
-    local touch2 = event.touches[2]
-    
-    -- Calculate the midpoint of the two touches
-    zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
-    
-    local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
-    zoomLevel = zoomLevel * zoomChange
-    zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
+    if zoomActive then
+        local touch1 = event.touches[1]
+        local touch2 = event.touches[2]
+        
+        -- Calculate the midpoint of the two touches
+        zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
+        
+        local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
+        zoomLevel = zoomLevel * zoomChange
+        zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
+    end
 end
 
 function updateWindDirection()
