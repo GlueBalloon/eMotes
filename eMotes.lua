@@ -126,55 +126,6 @@ function Mote:avoid(neighbors)
     end
 end
 
--- Mote drawing method
---[[
-function Mote:draw()
-pushStyle()
-fill(self.color)
-
-if zoomLevel > ZOOM_THRESHOLD then
-if self.state == "normal" then
-fill(255)
-end
--- Draw text emote
-fontSize(EMOJI_SIZE)
-local textWidth = textSize("😀")
-local textX = self.position.x - textWidth / 2
-local textY = self.position.y - EMOJI_SIZE / 2
-text("😀", textX, textY)
-else
--- Draw simple dot
-ellipse(self.position.x, self.position.y, MOTE_SIZE)
-end
-
-popStyle()
-end
-
-
-function Mote:draw(screenPos, zoomLevel)
-    pushStyle()
-    fill(self.color)
-    
-    if zoomLevel > ZOOM_THRESHOLD then
-        if self.state == "normal" then
-            fill(255)
-        end
-        -- Draw text emote
-        local textWidth = textSize("😀")
-        -- Calculate scaled font size based on zoom level
-        emojiSize = BASE_EMOJI_SIZE * (zoomLevel)
-        fontSize(emojiSize)
-        local textX = screenPos.x - textWidth / 2
-        local textY = screenPos.y - BASE_EMOJI_SIZE / 2
-        text("😀", textX, textY)
-    else
-        -- Draw simple dot
-        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
-    end
-    
-    popStyle()
-end
-]]
 -- Mote drawing function
 function Mote:draw(screenPos, zoomLevel)
     pushStyle()

@@ -67,8 +67,8 @@ function setup()
     testNeighborDetection()
     testWrappedNeighbors()
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
-    parameter.boolean("zoomActive", false)
-    parameter.boolean("clumpAndAvoid", false)
+    parameter.boolean("zoomActive", true)
+    parameter.boolean("clumpAndAvoid", true)
     parameter.watch("fps")
 end
 
@@ -188,11 +188,13 @@ function checkForNeighbors(mote, grid)
         end
     end
     
-    local clumpForce = mote:clump(neighbors)
-    local avoidanceForce = mote:avoid(neighbors)
-    
-    mote:applyForce(clumpForce)
-    mote:applyForce(avoidanceForce)
+    if clumpAndAvoid then
+        local clumpForce = mote:clump(neighbors)
+     --   local avoidanceForce = mote:avoid(neighbors)
+        
+        mote:applyForce(clumpForce)
+      --  mote:applyForce(avoidanceForce)
+    end
     
     -- If the mote is a Catalyte, affect its neighbors
     if mote.registerWith then
