@@ -154,7 +154,7 @@ function Mote:draw(screenPos, zoomLevel)
         text("😀", textX, textY)
     else
         -- Draw simple dot
-        ellipse(screenPos.x, screenPos.y, MOTE_SIZE * zoomLevel)
+        ellipse(screenPos.x, screenPos.y, self.size * zoomLevel)
     end
     
     popStyle()
@@ -176,6 +176,7 @@ Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
     Mote.init(self, x, y)  -- Adjust effect radius as needed
+    self.size = MOTE_SIZE * 1.25
     self.effectRadius = effectRadius or MOTE_SIZE * 8
 end
 
@@ -194,7 +195,7 @@ Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)
-    self.color = color(255, 201, 0)  -- Warm color for the su
+    self.color = color(255, 121, 0)  -- Warm color for the su
 end
 
 -- Sun class
@@ -210,13 +211,6 @@ function Sun:undoEffect(mote)
     if mote.state == "hot" then
         mote.state = "normal"
     end
-end
-
-function Sun:draw()
-    pushStyle()
-    fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE + 1)
-    popStyle()
 end
 
 
@@ -245,11 +239,4 @@ function Snowflake:undoEffect(mote)
     if mote.state == "cold" then
         mote.state = "normal"
     end
-end
-
-function Snowflake:draw()
-    pushStyle()
-    fill(self.color)
-    ellipse(self.position.x, self.position.y, MOTE_SIZE + 1)
-    popStyle()
 end

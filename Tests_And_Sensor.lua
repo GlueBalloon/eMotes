@@ -19,7 +19,7 @@ function testNeighborDetection()
     
     -- Update grid with test motes
     for _, mote in ipairs(testMotes) do
-        updateGrid(mote)
+        updateGrid(mote, grid)
         --       print("Updated grid for mote at " .. tostring(mote.position))
     end
     
@@ -60,7 +60,7 @@ function testWrappedNeighbors()
     
     -- Run checkForNeighbors on each mote
     for _, mote in ipairs(testMotes) do
-        updateGrid(mote) -- Update grid for each mote
+        updateGrid(mote, currentGrid) -- Update grid for each mote
         mote.neighbors = checkForNeighbors(mote, currentGrid) -- Check neighbors
     end
     

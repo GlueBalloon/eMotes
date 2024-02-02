@@ -115,7 +115,7 @@ function draw()
     translate(-zoomOrigin.x, -zoomOrigin.y)
     
     for i, mote in ipairs(motes) do
-        updateGrid(mote)
+        updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
         if isMoteVisible(mote) then
@@ -141,13 +141,13 @@ function limit(vec, max)
     return vec
 end
 
-function updateGrid(mote)
+function updateGrid(mote, grid)
     local gridX = math.floor(mote.position.x / gridSize) + 1
     local gridY = math.floor(mote.position.y / gridSize) + 1
     
-    nextGrid[gridX] = nextGrid[gridX] or {}
-    nextGrid[gridX][gridY] = nextGrid[gridX][gridY] or {}
-    table.insert(nextGrid[gridX][gridY], mote)
+    grid[gridX] = grid[gridX] or {}
+    grid[gridX][gridY] = grid[gridX][gridY] or {}
+    table.insert(grid[gridX][gridY], mote)
 end
 
 function touched(touch)
