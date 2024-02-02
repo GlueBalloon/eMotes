@@ -81,7 +81,7 @@ function zoomCallback(event)
         -- Calculate the midpoint of the two touches
         zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
         
-        local zoomChange = 1 + (event.dw + event.dh) / 500 -- Adjust the denominator to control zoom sensitivity
+        local zoomChange = 1 + (event.dw + event.dh) / 1200 -- Adjust the denominator to control zoom sensitivity
         zoomLevel = zoomLevel * zoomChange
         zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
     end
@@ -90,4 +90,147 @@ end
 function updateWindDirection()
     -- Slowly change the wind direction over time
     WIND_ANGLE = noise(ElapsedTime * 0.1) * math.pi * 2
+end
+
+function draw()
+    background(40, 40, 50)
+    -- Update frame count
+    frameCount = frameCount + 1
+    -- Calculate FPS every second
+    if ElapsedTime - lastTime >= 1 then
+        fps = frameCount / (ElapsedTime - lastTime)
+        frameCount = 0
+        lastTime = ElapsedTime
+    end
+    -- Clear the nextGrid for the next frame
+    nextGrid = {}
+    
+    updateWindDirection()
+    
+    -- Apply zoom and pan
+    local thisZoom = zoomLevel >= 1.0 and zoomLevel or 1.0
+    pushMatrix()
+    translate(zoomOrigin.x, zoomOrigin.y)
+    scale(thisZoom)
+    translate(-zoomOrigin.x, -zoomOrigin.y)
+    
+    for i, mote in ipairs(motes) do
+        updateGrid(mote)
+        checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
+        mote:update()
+        if isMoteVisible(mote) then
+            -- Calculate screen position for each mote
+            local screenPos = (mote.position - zoomOrigin) * zoomLevel + zoomOrigin
+            -- Draw mote at calculated screen position
+            mote:draw(screenPos, zoomLevel)
+            --mote:draw()
+        end
+    end
+    
+    popMatrix()
+    
+    -- Swap grids
+    currentGrid, nextGrid = nextGrid, currentGrid
+end
+
+-- Limit the magnitude of a vector
+function limit(vec, max)
+    if vec:len() > max then
+        return vec:normalize() * max
+    end
+    return vec
+end
+
+function updateGrid(mote)
+    local gridX = math.floor(mote.position.x / gridSize) + 1
+    local gridY = math.floor(mote.position.y / gridSize) + 1
+    
+    nextGrid[gridX] = nextGrid[gridX] or {}
+    nextGrid[gridX][gridY] = nextGrid[gridX][gridY] or {}
+    table.insert(nextGrid[gridX][gridY], mote)
+end
+
+function touched(touch)
+    if sensor:touched(touch) then return true end
+    if touch.state == BEGAN or touch.state == MOVING then
+        local newMote = Mote(touch.x, touch.y)
+        newMote.isTouchBorn = true
+        table.insert(motes, 1, newMote)
+    end
+end
+
+function checkForNeighbors(mote, grid)
+    local checkRadius = gridSize
+    if mote.effectRadius and mote.effectRadius > gridSize then
+        checkRadius = mote.effectRadius
+    end
+    
+    local gridX = math.floor(mote.position.x / gridSize) + 1
+    local gridY = math.floor(mote.position.y / gridSize) + 1
+    local neighbors = {}
+    
+    -- Calculate the range of cells to check
+    local cellsToCheck = math.ceil(checkRadius / gridSize)
+    
+    for dx = -cellsToCheck, cellsToCheck do
+        for dy = -cellsToCheck, cellsToCheck do
+            local x = (gridX + dx - 1) % math.ceil(WIDTH / gridSize) + 1
+            local y = (gridY + dy - 1) % math.ceil(HEIGHT / gridSize) + 1
+            
+            local cell = grid[x] and grid[x][y]
+            if cell then
+                for _, neighbor in ipairs(cell) do
+                    if neighbor ~= mote and isNeighbor(mote, neighbor, checkRadius) then
+                        table.insert(neighbors, neighbor)
+                    end
+                end
+            end
+        end
+    end
+    
+    local clumpForce = mote:clump(neighbors)
+    local avoidanceForce = mote:avoid(neighbors)
+    
+    mote:applyForce(clumpForce)
+    mote:applyForce(avoidanceForce)
+    
+    -- If the mote is a Catalyte, affect its neighbors
+    if mote.registerWith then
+        mote:registerWith(neighbors)
+    end
+    
+    return neighbors
+end
+
+function isNeighbor(mote1, mote2, searchRadius)
+    local dx = math.abs(mote1.position.x - mote2.position.x)
+    local dy = math.abs(mote1.position.y - mote2.position.y)
+    
+    -- Adjust for screen wrapping
+    dx = math.min(dx, WIDTH - dx)
+    dy = math.min(dy, HEIGHT - dy)
+    
+    local result = math.sqrt(dx * dx + dy * dy) < searchRadius
+    return result
+end
+
+-- Wind function using Perlin noise
+function wind(mote)
+    local scale = 0.01
+    local offset = mote.noiseOffset
+    
+    -- Adjust coordinates for Perlin noise to wrap around smoothly
+    local adjustedX = (mote.position.x % WIDTH) / WIDTH
+    local adjustedY = (mote.position.y % HEIGHT) / HEIGHT
+    
+    local angle = noise(adjustedX * scale + offset, adjustedY * scale + offset) * math.pi * 2
+    local windForce = vec2(math.cos(angle), math.sin(angle))
+    
+    local randomAdjustment = vec2(math.random() * 1 - 0.5, math.random() * 1 - 0.5)
+    windForce = windForce + randomAdjustment
+    
+    local newVelocity = limit(mote.velocity + windForce, mote.maxSpeed)
+    local newPosition = mote.position + newVelocity
+    
+    return newPosition, newVelocity
 end
