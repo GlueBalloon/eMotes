@@ -22,22 +22,6 @@ function Mote:init(x, y)
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
 end
 
-function Mote:update()
-    local newPosition, newVelocity = wind(self)
-    
-    -- Apply time scale to the velocity
-    newVelocity = newVelocity * TIMESCALE
-    
-    self.position = self.position + newVelocity
-    self.velocity = newVelocity
-    
-    -- Screen wrapping
-    self.position.x = (self.position.x + WIDTH) % WIDTH
-    self.position.y = (self.position.y + HEIGHT) % HEIGHT
-    self:applyCatalytes()
-    self:updateAppearance()
-end
-
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
@@ -110,6 +94,7 @@ function Mote:clump(neighbors)
 end
 
 -- Mote drawing function
+--[[
 function Mote:draw(screenPos, zoomLevel)
     pushStyle()
     fill(self.color)
@@ -143,10 +128,63 @@ function Mote:draw(screenPos, zoomLevel)
     popStyle()
 end
 
+]]
 
+function Mote:update()
+local newPosition, newVelocity = wind(self)
 
+-- Apply time scale to the velocity
+newVelocity = newVelocity * TIMESCALE
 
+self.position = self.position + newVelocity
+self.velocity = newVelocity
 
+-- Screen wrapping
+self.position.x = (self.position.x + WIDTH) % WIDTH
+self.position.y = (self.position.y + HEIGHT) % HEIGHT
+self:applyCatalytes()
+self:updateAppearance()
+end
+
+function Mote:draw()
+pushStyle()
+spriteMode(CORNER)
+fill(self.color)
+
+-- Since we're drawing to a buffer, we no longer need to adjust for zoomLevel here.
+-- The decision to draw an emoji or a dot can be based on a global state or condition.
+if shouldDrawEmoji then -- This condition needs to be defined based on your application logic
+fontSize(BASE_EMOJI_SIZE) -- Adjust fontSize based on your application needs
+local textWidth, textHeight = textSize("😀")
+-- Draw the emoji centered on the mote's position
+text("😀", self.position.x - textWidth / 2, self.position.y - textHeight / 2)
+else
+-- Draw simple dot at the mote's position
+ellipse(self.position.x, self.position.y, self.size)
+end
+
+popStyle()
+end
+--[[
+function Mote:draw()
+
+pushStyle()
+fill(self.color)
+spriteMode(CORNER)
+
+-- Calculate the mote's scaled and repositioned coordinates
+local scale = WIDTH / zoomScroller.frame.width
+local posX = (self.position.x - zoomScroller.frame.x) * scale
+local posY = (self.position.y - zoomScroller.frame.y) * scale
+local scaledSize = self.size * scale
+
+-- Draw the mote at the scaled and repositioned coordinates
+ellipse(posX, posY, scaledSize)
+
+popStyle()
+end
+
+]]
 
 
 
@@ -158,15 +196,15 @@ end
 Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
-    Mote.init(self, x, y)  -- Adjust effect radius as needed
-    self.size = MOTE_SIZE * 1.25
-    self.effectRadius = effectRadius or MOTE_SIZE * 8
+Mote.init(self, x, y)  -- Adjust effect radius as needed
+self.size = MOTE_SIZE * 1.25
+self.effectRadius = effectRadius or MOTE_SIZE * 8
 end
 
 function Catalyte:registerWith(neighbors)
-    for _, neighbor in ipairs(neighbors) do
-        neighbor.currentAffecting[self] = true
-    end
+for _, neighbor in ipairs(neighbors) do
+neighbor.currentAffecting[self] = true
+end
 end
 
 
@@ -177,23 +215,23 @@ end
 Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
-    Catalyte.init(self, x, y, effectRadius)
-    self.color = color(255, 121, 0)  -- Warm color for the su
+Catalyte.init(self, x, y, effectRadius)
+self.color = color(255, 121, 0)  -- Warm color for the su
 end
 
 -- Sun class
 function Sun:applyEffect(mote)
-    if mote.state == "cold" then
-        mote.state = "normal"
-    else
-        mote.state = "hot"
-    end
+if mote.state == "cold" then
+mote.state = "normal"
+else
+mote.state = "hot"
+end
 end
 
 function Sun:undoEffect(mote)
-    if mote.state == "hot" then
-        mote.state = "normal"
-    end
+if mote.state == "hot" then
+mote.state = "normal"
+end
 end
 
 
@@ -205,21 +243,21 @@ Snowflake = class(Catalyte)
 
 -- Snowflake class
 function Snowflake:init(x, y, effectRadius)
-    Catalyte.init(self, x, y, effectRadius)
-    self.color = color(59, 238, 231)  -- Cold color for the snowflake
+Catalyte.init(self, x, y, effectRadius)
+self.color = color(59, 238, 231)  -- Cold color for the snowflake
 end
 
 -- Snowflake class
 function Snowflake:applyEffect(mote)
-    if mote.state == "hot" then
-        mote.state = "normal"
-    else
-        mote.state = "cold"
-    end
+if mote.state == "hot" then
+mote.state = "normal"
+else
+mote.state = "cold"
+end
 end
 
 function Snowflake:undoEffect(mote)
-    if mote.state == "cold" then
-        mote.state = "normal"
-    end
+if mote.state == "cold" then
+mote.state = "normal"
+end
 end
