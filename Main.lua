@@ -115,7 +115,7 @@ function draw()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
-    
+    drawVisibleFrameArea(zoomScroller.frame)
     
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
