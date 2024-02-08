@@ -86,8 +86,35 @@ function ZoomScroller:visibleAreas(frame)
     return visibleAreas
 end
 
-function drawVisibleFrameAreas(frame)
-    local visibleAreas = ZoomScroller:visibleAreas(frame) -- Get the visible areas
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleAreas)
+    -- Directly adapt from Mote:draw logic to calculate drawing parameters
+    for _, area in ipairs(visibleAreas) do
+        -- Check if the mote's native position is within this visible area
+        if nativePosition.x >= area.left and nativePosition.x <= area.right and
+        nativePosition.y >= area.bottom and nativePosition.y <= area.top then
+            -- Calculate the effective startX and startY like in Mote:draw
+            local effectiveStartX = (self.frame.x - self.frame.width / 2)
+            local effectiveStartY = (self.frame.y - self.frame.height / 2)
+            
+            -- Adjust mote's position based on the frame's current state
+            local adjustedPosX = effectiveStartX + (nativePosition.x * (self.frame.width / WIDTH))
+            local adjustedPosY = effectiveStartY + (nativePosition.y * (self.frame.height / HEIGHT))
+            
+            -- Determine the adjusted size, similarly to how it's done in Mote:draw
+            local adjustedSize = nativeSize * (self.frame.width / WIDTH)
+            
+            -- No explicit "scale" used; directly return adjusted position and size
+            return {x = adjustedPosX, y = adjustedPosY, size = adjustedSize}
+        end
+    end
+    
+    -- Return nil if the mote is not within any visible area
+    return nil
+end
+
+
+function drawVisibleFrameAreas(visibleAreas)
     pushStyle()
     noFill()
     stroke(0, 255, 0) -- Green color

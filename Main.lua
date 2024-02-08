@@ -122,23 +122,22 @@ function draw()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
-    drawVisibleFrameAreas(frame)
-    
-    drawVisibleFrameArea(frame)
-    local vizzy = zoomScroller:visibleArea(frame)
-    local vizzies = zoomScroller:visibleAreas(frame)
+    local visibleAreas = zoomScroller:visibleAreas(frame)
+    drawVisibleFrameAreas(visibleAreas)    
+
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        if mote:isVisibleInSingle(frame, vizzy) or mote:isVisibleIn(frame, vizzies) then
-            mote:draw(frame) -- Assuming draw also takes care of visibility internally
+        local drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size, visibleAreas)
+        if drawingParams then
+            mote:drawWithParams(drawingParams.x, drawingParams.y, drawingParams.size)
             motesDrawn = motesDrawn + 1
         else
             motesNotDrawn = motesNotDrawn + 1
         end
     end
-    
+       
     popStyle()
     
     currentGrid, nextGrid = nextGrid, currentGrid

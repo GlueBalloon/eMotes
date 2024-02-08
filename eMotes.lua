@@ -170,6 +170,22 @@ function Mote:isVisibleIn(frame, visibleAreas)
     return false
 end
 
+function Mote:drawWithParams(x, y, size)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    spriteMode(CENTER)
+    local transitionalSize = 8 -- your defined value or logic here
+    -- Use the provided x, y, and size to draw
+    if size >= transitionalSize then
+        fill(255)
+        fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
+        text("😀", x, y)
+    else
+        ellipse(x, y, size)
+    end
+    popStyle()
+end
 
 
 
