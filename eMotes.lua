@@ -2,7 +2,7 @@
 
 
 
-
+--[[
 
 -- Mote class
 Mote = class()
@@ -222,4 +222,4 @@ function Snowflake:undoEffect(mote)
     if mote.state == "cold" then
         mote.state = "normal"
     end
-end
+end]]

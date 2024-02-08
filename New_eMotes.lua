@@ -145,27 +145,28 @@ self.position.y = (self.position.y + HEIGHT) % HEIGHT
 self:applyCatalytes()
 self:updateAppearance()
 end
-
-function Mote:draw()
-pushStyle()
-spriteMode(CORNER)
-fill(self.color)
-
--- Since we're drawing to a buffer, we no longer need to adjust for zoomLevel here.
--- The decision to draw an emoji or a dot can be based on a global state or condition.
-if shouldDrawEmoji then -- This condition needs to be defined based on your application logic
-fontSize(BASE_EMOJI_SIZE) -- Adjust fontSize based on your application needs
-local textWidth, textHeight = textSize("😀")
--- Draw the emoji centered on the mote's position
-text("😀", self.position.x - textWidth / 2, self.position.y - textHeight / 2)
-else
--- Draw simple dot at the mote's position
-ellipse(self.position.x, self.position.y, self.size)
-end
-
-popStyle()
-end
 --[[
+function Mote:drawllll()
+    pushStyle()
+    spriteMode(CORNER)
+    fill(self.color)
+    
+    -- Since we're drawing to a buffer, we no longer need to adjust for zoomLevel here.
+    -- The decision to draw an emoji or a dot can be based on a global state or condition.
+    if shouldDrawEmoji then -- This condition needs to be defined based on your application logic
+        fontSize(BASE_EMOJI_SIZE) -- Adjust fontSize based on your application needs
+        local textWidth, textHeight = textSize("😀")
+        -- Draw the emoji centered on the mote's position
+        text("😀", self.position.x - textWidth / 2, self.position.y - textHeight / 2)
+    else
+        -- Draw simple dot at the mote's position
+        ellipse(self.position.x, self.position.y, self.size)
+    end
+    
+    popStyle()
+end
+
+
 function Mote:draw()
 
 pushStyle()
@@ -184,27 +185,148 @@ ellipse(posX, posY, scaledSize)
 popStyle()
 end
 
+
+function Mote:draw(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Calculate the scaled position and size of the mote
+    local aScale = WIDTH / frame.width -- Assuming the original WIDTH is the base
+    -- Adjusting for the frame being centered
+    local centerX = frame.width / 2 + frame.x
+    local centerY = frame.height / 2 + frame.y
+    local posX = (self.position.x - centerX) * aScale + WIDTH
+    local posY = (self.position.y - centerY) * aScale + HEIGHT
+    local scaledSize = self.size * aScale
+    
+    -- Draw the mote
+    ellipse(posX, posY, scaledSize)
+    popStyle()
+end
+
+
+function Mote:drawwwww(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Calculate the scaled position and size of the mote
+    local aScale = frame.width / WIDTH-- Assuming the original WIDTH is the base
+    -- Adjusting for the frame being centered
+    local centerX = frame.width / 2 + frame.x
+    local centerY = frame.height / 2 + frame.y
+    local posX = (self.position.x - frame.x) * aScale + WIDTH
+    local posY = (self.position.y - frame.y) * aScale + HEIGHT
+    local scaledSize = self.size * aScale
+    
+    -- Draw the mote
+    ellipse(posX, posY, scaledSize)
+    popStyle()
+end
+
+function Mote:draw(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Recalculate the scale based on frame width relative to the original viewport width
+    local aScale = WIDTH / frame.width
+    
+    -- Adjust position calculations given that frame.x and frame.y are the center
+    local posX = (self.position.x - (frame.x - frame.width / 2)) * aScale
+    local posY = (self.position.y - (frame.y - frame.height / 2)) * aScale
+    
+    local scaledSize = self.size * aScale
+    
+    -- Draw the mote
+    ellipse(posX, posY, scaledSize)
+    popStyle()
+end
+
+function Mote:draw(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Recalculate the scale based on frame width relative to the original viewport width
+    local aScale = frame.width / WIDTH
+    
+    -- Adjust position calculations given that frame.x and frame.y are the center
+    local posX = (self.position.x + (frame.x - frame.width / 2)) * aScale
+    local posY = (self.position.y + (frame.y - frame.height / 2)) * aScale
+    
+    local scaledSize = self.size * aScale
+    
+    -- Draw the mote
+    ellipse(posX, posY, scaledSize)
+    popStyle()
+end
 ]]
 
+--correct scrolling:
+function Mote:draw(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Directly apply the frame's position and size to calculate the mote's position.
+    -- Scale is determined by the frame width relative to the initial viewport width (WIDTH).
+    local scaleRatio = frame.width / WIDTH
+    
+    -- Calculate the mote's position considering the frame's bottom-left as the origin.
+    -- frame.x and frame.y denote the center; adjust to find the bottom-left corner.
+    local bottomLeftX = frame.x - (frame.width / 2)
+    local bottomLeftY = frame.y - (frame.height / 2)
+    
+    -- Adjust the mote's position based on the bottom-left origin.
+    local posX = (self.position.x + bottomLeftX) * scaleRatio
+    local posY = (self.position.y + bottomLeftY) * scaleRatio
+    
+    -- Scale the mote's size according to the same ratio.
+    local adjustedSize = self.size * scaleRatio
+    
+    -- Draw the mote at the new position with the adjusted size.
+    ellipse(posX, posY, adjustedSize)
+    
+    popStyle()
+end
 
-
-
-
-
-
+function Mote:draw(frame)
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    
+    -- Calculate the effective startX and startY based on the frame being centered
+    -- and the fact that 0,0 is at the lower left in Codea coordinates.
+    local effectiveStartX = (frame.x - frame.width / 2)
+    local effectiveStartY = (frame.y - frame.height / 2)
+    
+    -- Adjust mote's position considering the frame's center and the increase direction of coordinates.
+    -- Here, posX and posY calculate positions from the bottom-left corner, considering the frame's adjustments.
+    local posX = effectiveStartX + (self.position.x * (frame.width / WIDTH))
+    local posY = effectiveStartY + (self.position.y * (frame.height / HEIGHT))
+    
+    local adjustedSize = self.size * (frame.width / WIDTH)
+    
+    -- Draw the mote at the new position with its original size.
+    ellipse(posX, posY, adjustedSize)
+    
+    popStyle()
+end
 -- Catalyte class
 Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
-Mote.init(self, x, y)  -- Adjust effect radius as needed
-self.size = MOTE_SIZE * 1.25
-self.effectRadius = effectRadius or MOTE_SIZE * 8
+    Mote.init(self, x, y)  -- Adjust effect radius as needed
+    self.size = MOTE_SIZE * 1.25
+    self.effectRadius = effectRadius or MOTE_SIZE * 8
 end
 
 function Catalyte:registerWith(neighbors)
-for _, neighbor in ipairs(neighbors) do
-neighbor.currentAffecting[self] = true
-end
+    for _, neighbor in ipairs(neighbors) do
+        neighbor.currentAffecting[self] = true
+    end
 end
 
 
@@ -215,23 +337,23 @@ end
 Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
-Catalyte.init(self, x, y, effectRadius)
-self.color = color(255, 121, 0)  -- Warm color for the su
+    Catalyte.init(self, x, y, effectRadius)
+    self.color = color(255, 121, 0)  -- Warm color for the su
 end
 
 -- Sun class
 function Sun:applyEffect(mote)
-if mote.state == "cold" then
-mote.state = "normal"
-else
-mote.state = "hot"
-end
+    if mote.state == "cold" then
+        mote.state = "normal"
+    else
+        mote.state = "hot"
+    end
 end
 
 function Sun:undoEffect(mote)
-if mote.state == "hot" then
-mote.state = "normal"
-end
+    if mote.state == "hot" then
+        mote.state = "normal"
+    end
 end
 
 
@@ -243,21 +365,21 @@ Snowflake = class(Catalyte)
 
 -- Snowflake class
 function Snowflake:init(x, y, effectRadius)
-Catalyte.init(self, x, y, effectRadius)
-self.color = color(59, 238, 231)  -- Cold color for the snowflake
+    Catalyte.init(self, x, y, effectRadius)
+    self.color = color(59, 238, 231)  -- Cold color for the snowflake
 end
 
 -- Snowflake class
 function Snowflake:applyEffect(mote)
-if mote.state == "hot" then
-mote.state = "normal"
-else
-mote.state = "cold"
-end
+    if mote.state == "hot" then
+        mote.state = "normal"
+    else
+        mote.state = "cold"
+    end
 end
 
 function Snowflake:undoEffect(mote)
-if mote.state == "cold" then
-mote.state = "normal"
-end
+    if mote.state == "cold" then
+        mote.state = "normal"
+    end
 end
