@@ -1,28 +1,4 @@
 
---[[
-function setup()
-local spriteAsset = asset.builtin.Surfaces.Basic_Bricks_Color -- Example image, now used only in draw
-zoomScroller = ZoomScroller(spriteAsset)
-
--- Setup sensor for pinch gestures
-screen = {x=0, y=0, w=WIDTH, h=HEIGHT}
-sensor = Sensor {parent=screen}
-sensor:onZoom(function(event) 
-zoomScroller:zoomCallback(event)
-end)
-end
-
-function touched(touch)
--- Pass touch events to the sensor
-sensor:touched(touch)
-end
-
-function draw()
-background(40, 40, 50)
--- drawTiledImage function now uses the frame to draw the image within it
-zoomScroller:drawTiledImageInBounds()
-end
-]]
 
 ZoomScroller = class()
 

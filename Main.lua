@@ -45,15 +45,25 @@ function calculateTextSize()
         fontSize(TEXT_SIZE)
         currentWidth = textSize(emote)
     end
-    BASE_EMOJI_SIZE = BASE_EMOJI_SIZE * 0.85 -- artificial adjustment
+    BASE_EMOJI_SIZE = BASE_EMOJI_SIZE * 0.75 -- artificial adjustment
     emojiSize = BASE_EMOJI_SIZE
     print(BASE_EMOJI_SIZE)
 end
 
 function setup()
-    screen = {x=0,y=0,w=WIDTH,h=HEIGHT} 
-    sensor = Sensor {parent=screen} -- tell the object you want to be listening to touches, here the screen
-    sensor:onZoom( zoomCallback )
+    
+    bufferA = image(WIDTH, HEIGHT)
+    bufferB = image(WIDTH, HEIGHT)
+    useBufferA = true
+    
+    zoomScroller = ZoomScroller()
+    
+    -- Setup sensor for pinch gestures
+    screen = {x=0, y=0, w=WIDTH, h=HEIGHT}
+    sensor = Sensor {parent=screen}
+    sensor:onZoom(function(event) 
+        zoomScroller:zoomCallback(event)
+    end)
     
     calculateTextSize()
     
@@ -72,76 +82,50 @@ function setup()
     parameter.watch("fps")
 end
 
--- Zoom callback function
-function zoomCallback(event)
-    if zoomActive then
-        local touch1 = event.touches[1]
-        local touch2 = event.touches[2]
-        
-        -- Calculate the midpoint of the two touches
-        zoomOrigin = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
-        
-        local zoomChange = 1 + (event.dw + event.dh) / 1200 -- Adjust the denominator to control zoom sensitivity
-        zoomLevel = zoomLevel * zoomChange
-        zoomLevel = math.max(0.1, math.min(zoomLevel, 10)) -- Limit the zoom level
-    end
-end
-function zoomCallback(event)
-    if zoomActive then
-        local touch1 = event.touches[1]
-        local touch2 = event.touches[2]
-        
-        -- Calculate the midpoint of the two touches
-        local midpoint = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
-        
-        -- Calculate the change in zoom
-        local zoomChange = 1 + (event.dw + event.dh) / 800 -- Adjust the denominator to control zoom sensitivity
-        local newZoomLevel = zoomLevel * zoomChange
-        newZoomLevel = math.max(1, math.min(newZoomLevel, 10)) -- Limit the zoom level
-        
-        -- Adjust zoomOrigin based on the midpoint of the zoom gesture and the change in zoom level
-        -- This accounts for the direction of the drag during zoom
-        if newZoomLevel ~= zoomLevel then
-            local zoomDiff = newZoomLevel / zoomLevel
-            zoomOrigin = (zoomOrigin - midpoint) * zoomDiff + midpoint
-        end
-        
-        zoomLevel = newZoomLevel
-    end
-end
 function updateWindDirection()
     -- Slowly change the wind direction over time
     WIND_ANGLE = noise(ElapsedTime * 0.1) * math.pi * 2
 end
 
+--should draw zoomed motes not a zoomed image
 function draw()
-    background(40, 40, 50)
+    
     -- Update frame count
     frameCount = frameCount + 1
-    -- Calculate FPS every second
     if ElapsedTime - lastTime >= 1 then
         fps = frameCount / (ElapsedTime - lastTime)
         frameCount = 0
         lastTime = ElapsedTime
     end
+    
     -- Clear the nextGrid for the next frame
     nextGrid = {}
     
     updateWindDirection()
     
+    local frame = zoomScroller.frame
+    pushStyle()
+    background(40, 40, 50)
+    spriteMode(CENTER)
+    
+    pushStyle()
+    strokeWidth(10)
+    stroke(255, 14, 0)
+    noFill()
+    rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
+    popStyle()
+    
+    
+    
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        if isMoteVisible(mote) then
-            -- Calculate screen position for each mote
-            local screenPos = (mote.position - zoomOrigin) * zoomLevel + zoomOrigin
-            -- Draw mote at calculated screen position
-            mote:draw(screenPos, zoomLevel)
-        end
+        mote:draw(frame)
     end
     
-    -- Swap grids
+    popStyle()
+    
     currentGrid, nextGrid = nextGrid, currentGrid
 end
 
@@ -202,10 +186,10 @@ function checkForNeighbors(mote, grid)
     
     if clumpAndAvoid then
         local clumpForce = mote:clump(neighbors)
-     --   local avoidanceForce = mote:avoid(neighbors)
+        --   local avoidanceForce = mote:avoid(neighbors)
         
         mote:applyForce(clumpForce)
-      --  mote:applyForce(avoidanceForce)
+        --  mote:applyForce(avoidanceForce)
     end
     
     -- If the mote is a Catalyte, affect its neighbors

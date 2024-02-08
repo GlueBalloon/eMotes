@@ -8,11 +8,8 @@
 		<string>Tests_And_Sensor</string>
 		<string>Main</string>
 		<string>eMotes</string>
-		<string>Scratch</string>
-		<string>NewMain</string>
-		<string>New_eMotes</string>
-		<string>NewScratch</string>
 		<string>ZoomScroller</string>
+		<string>Scratch</string>
 	</array>
 </dict>
 </plist>

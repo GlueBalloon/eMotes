@@ -2,7 +2,7 @@
 
 
 
---[[
+
 
 -- Mote class
 Mote = class()
@@ -15,27 +15,11 @@ function Mote:init(x, y)
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = 6 -- Adjust as needed
     self.maxForce = math.random() * 2 -- Adjust as needed
-    self.defaultColor = color(229, 205, 91)
+    self.defaultColor = color(248, 211, 15)
     self.color = self.defaultColor
     self.currentAffecting = {}
     self.affectedBy = {}  -- Table to keep track of affecting catalytes
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
-end
-
-function Mote:update()
-    local newPosition, newVelocity = wind(self)
-    
-    -- Apply time scale to the velocity
-    newVelocity = newVelocity * TIMESCALE
-    
-    self.position = self.position + newVelocity
-    self.velocity = newVelocity
-    
-    -- Screen wrapping
-    self.position.x = (self.position.x + WIDTH) % WIDTH
-    self.position.y = (self.position.y + HEIGHT) % HEIGHT
-    self:applyCatalytes()
-    self:updateAppearance()
 end
 
 function Mote:updateAppearance()
@@ -109,45 +93,56 @@ function Mote:clump(neighbors)
     end
 end
 
--- Mote drawing function
-function Mote:draw(screenPos, zoomLevel)
+function Mote:update()
+    local newPosition, newVelocity = wind(self)
+    
+    -- Apply time scale to the velocity
+    newVelocity = newVelocity * TIMESCALE
+    
+    self.position = self.position + newVelocity
+    self.velocity = newVelocity
+    
+    -- Screen wrapping
+    self.position.x = (self.position.x + WIDTH) % WIDTH
+    self.position.y = (self.position.y + HEIGHT) % HEIGHT
+    self:applyCatalytes()
+    self:updateAppearance()
+end
+
+function Mote:draw(frame)
     pushStyle()
     fill(self.color)
+    noStroke()
+    spriteMode(CENTER)
+    -- Calculate the effective startX and startY based on the frame being centered
+    -- and the fact that 0,0 is at the lower left in Codea coordinates.
+    local effectiveStartX = (frame.x - frame.width / 2)
+    local effectiveStartY = (frame.y - frame.height / 2)
     
-    if zoomLevel > ZOOM_THRESHOLD then
-        if self.state == "normal" then
-            fill(255)
-        end
-        
-        -- Calculate visible width at current zoom level
-        local visibleWidth = WIDTH / zoomLevel
-        
-        -- Calculate scaled font size based on visible width
-        local emojiRatio = BASE_EMOJI_SIZE / MOTE_SIZE  -- Original ratio of emoji size to screen width
-        local scaledFontSize = BASE_EMOJI_SIZE * emojiRatio
-        
-        fontSize(scaledFontSize * zoomLevel)
-        
-        -- Calculate text width for centering
-        local textWidth = textSize("😀")
-        local textX = screenPos.x - textWidth / 2
-        local textY = screenPos.y - scaledFontSize / 2
-        
-        -- Draw text emote
-        text("😀", textX, textY)
+    -- Adjust mote's position considering the frame's center and the increase direction of coordinates.
+    -- Here, posX and posY calculate positions from the bottom-left corner, considering the frame's adjustments.
+    local posX = effectiveStartX + (self.position.x * (frame.width / WIDTH))
+    local posY = effectiveStartY + (self.position.y * (frame.height / HEIGHT))
+    
+    local adjustedSize = self.size * (frame.width / WIDTH)
+    local transitionalSize = 8 -- your defined value or logic here
+    
+    if adjustedSize >= transitionalSize then
+        fill(255)--to remove tint from emoji
+        local textRatio = adjustedSize / self.size
+        fontSize(BASE_EMOJI_SIZE * textRatio)
+        local textWidth, textHeight = textSize("😀")
+        local textX = posX - textWidth / 2
+        local textY = posY - textHeight / 2
+        -- Draw the emoji centered on the mote's position
+        text("😀", posX, posY)
     else
-        -- Draw simple dot
-        ellipse(screenPos.x, screenPos.y, self.size * zoomLevel)
+        -- Draw simple dot at the mote's position
+        ellipse(posX, posY, adjustedSize)
     end
     
     popStyle()
 end
-
-
-
-
-
-
 
 
 
@@ -222,4 +217,4 @@ function Snowflake:undoEffect(mote)
     if mote.state == "cold" then
         mote.state = "normal"
     end
-end]]
+end
