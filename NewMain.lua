@@ -45,7 +45,7 @@ function calculateTextSize()
         fontSize(TEXT_SIZE)
         currentWidth = textSize(emote)
     end
-    BASE_EMOJI_SIZE = BASE_EMOJI_SIZE * 0.85 -- artificial adjustment
+    BASE_EMOJI_SIZE = BASE_EMOJI_SIZE * 0.75 -- artificial adjustment
     emojiSize = BASE_EMOJI_SIZE
     print(BASE_EMOJI_SIZE)
 end
