@@ -99,3 +99,4 @@ function ZoomScroller:drawTiledImageInBounds(anImageOrNot)
     end
     popStyle()
 end
+

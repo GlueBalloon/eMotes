@@ -16,6 +16,8 @@ emojiSize = BASE_EMOJI_SIZE
 lastTime = ElapsedTime
 frameCount = 0
 fps = 0
+motesDrawn = 0
+motesNotDrawn = 0
 
 -- Function to check if a mote is visible on screen
 function isMoteVisible(mote)
@@ -50,12 +52,7 @@ function calculateTextSize()
     print(BASE_EMOJI_SIZE)
 end
 
-function setup()
-    
-    bufferA = image(WIDTH, HEIGHT)
-    bufferB = image(WIDTH, HEIGHT)
-    useBufferA = true
-    
+function setup()   
     zoomScroller = ZoomScroller()
     
     -- Setup sensor for pinch gestures
@@ -74,12 +71,19 @@ function setup()
     for i = 1, MOTE_COUNT do
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
-    testNeighborDetection()
-    testWrappedNeighbors()
+
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
     parameter.boolean("zoomActive", true)
     parameter.boolean("clumpAndAvoid", true)
     parameter.watch("fps")
+    parameter.watch("motesDrawn")
+    parameter.watch("motesNotDrawn")
+    
+    shouldTest = false
+    if shouldTest then
+        testNeighborDetection()
+        testWrappedNeighbors()
+    end
 end
 
 function updateWindDirection()
@@ -98,6 +102,9 @@ function draw()
         lastTime = ElapsedTime
     end
     
+    motesDrawn = 0
+    motesNotDrawn = 0
+    
     -- Clear the nextGrid for the next frame
     nextGrid = {}
     
@@ -115,13 +122,21 @@ function draw()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
-    drawVisibleFrameArea(zoomScroller.frame)
+    drawVisibleFrameAreas(frame)
     
+    drawVisibleFrameArea(frame)
+    local vizzy = zoomScroller:visibleArea(frame)
+    local vizzies = zoomScroller:visibleAreas(frame)
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        mote:draw(frame)
+        if mote:isVisibleInSingle(frame, vizzy) or mote:isVisibleIn(frame, vizzies) then
+            mote:draw(frame) -- Assuming draw also takes care of visibility internally
+            motesDrawn = motesDrawn + 1
+        else
+            motesNotDrawn = motesNotDrawn + 1
+        end
     end
     
     popStyle()

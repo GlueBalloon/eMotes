@@ -144,6 +144,32 @@ function Mote:draw(frame)
     popStyle()
 end
 
+function Mote:isVisibleInSingle(frame, visibleAreas)
+    if not visibleAreas then return false end -- Handle case of no visible area
+    
+    -- Adjust mote's position based on the frame's center coordinates
+    local adjustedPosX = frame.x + (self.position.x - WIDTH / 2) * (frame.width / WIDTH)
+    local adjustedPosY = frame.y + (self.position.y - HEIGHT / 2) * (frame.height / HEIGHT)
+    
+    -- Check if the mote's adjusted position is within the calculated visible areas
+    return adjustedPosX >= visibleAreas.left and adjustedPosX <= visibleAreas.right and
+    adjustedPosY >= visibleAreas.bottom and adjustedPosY <= visibleAreas.top
+end
+
+function Mote:isVisibleIn(frame, visibleAreas)
+    for _, area in ipairs(visibleAreas) do
+        -- Adjust mote's position based on the frame's center coordinates
+        local adjustedPosX = frame.x + (self.position.x - WIDTH / 2) * (frame.width / WIDTH)
+        local adjustedPosY = frame.y + (self.position.y - HEIGHT / 2) * (frame.height / HEIGHT)
+        -- Check if the mote's position is within any of the calculated visible areas
+        if adjustedPosX >= area.left and adjustedPosX <= area.right and
+        adjustedPosY >= area.bottom and adjustedPosY <= area.top then
+            return true
+        end
+    end
+    return false
+end
+
 
 
 
