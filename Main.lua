@@ -1,4 +1,4 @@
-MOTE_SIZE = 3
+MOTE_SIZE = 2
 MOTE_COUNT = 3000
 TIMESCALE = 1
 WIND_ANGLE = 0
@@ -78,6 +78,8 @@ function setup()
     parameter.watch("fps")
     parameter.watch("motesDrawn")
     parameter.watch("motesNotDrawn")
+    parameter.watch("redFrames")
+    parameter.watch("preWrappedAreas")
     
     shouldTest = false
     if shouldTest then
@@ -123,8 +125,22 @@ function draw()
     popStyle()
     
     local visibleAreas = zoomScroller:visibleAreas(frame)
-    drawVisibleFrameAreas(visibleAreas)    
+    drawFrameAreas(visibleAreas)    
 
+    local redFrames = zoomScroller:calculateRedFrameVisibleAreas(frame)
+    --drawFrameAreas(redFrames, color(255, 14, 0))   
+    
+    candidates = zoomScroller:visibleAreas2(frame)
+    drawFrameAreas(candidates, color(236, 221, 67))
+    
+    pCandidates = zoomScroller:visibleAreas3(frame)
+    drawFrameAreas(pCandidates, color(166, 67, 236))
+    
+    drawMiniFrame(frame)
+    local rawAreas = zoomScroller:defineRawTilingAreas(frame)
+    zoomScroller:drawVisibleCornersOfRawAreas(rawAreas, frame, true)
+    ZoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, true)
+    
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
