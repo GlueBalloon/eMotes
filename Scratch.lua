@@ -1,4 +1,91 @@
 
+    
+function ZoomScroller:visibleAreaRatios(frame)
+    -- Calculate the visible portion of the frame in screen coordinates
+    local visibleLeft = math.max(frame.x - frame.width / 2, 0)
+    local visibleRight = math.min(frame.x + frame.width / 2, WIDTH)
+    local visibleTop = math.min(frame.y + frame.height / 2, HEIGHT)
+    local visibleBottom = math.max(frame.y - frame.height / 2, 0)
+    
+    -- Calculate the visible area's width and height
+    local visibleWidth = visibleRight - visibleLeft
+    local visibleHeight = visibleTop - visibleBottom
+    
+    -- Ratio for the visible part of the frame
+    local visibleRatio = {
+        wR = visibleWidth / frame.width,
+        hR = visibleHeight / frame.height,
+        xR = (visibleLeft - (frame.x - frame.width / 2)) / frame.width,
+        yR = (visibleBottom - (frame.y - frame.height / 2)) / frame.height,
+    }
+    
+    -- Initialize the ratios table with the visible area ratio
+    local ratios = { visibleRatio }
+    
+    -- Determine if there's a bisection
+    local areaLeftHorizontally = WIDTH - visibleWidth
+    local areaLeftVertically = HEIGHT - visibleHeight
+    local bisectedW = areaLeftHorizontally > 0
+    local bisectedH = areaLeftVertically > 0
+    
+    -- If there's a bisection, calculate the ratio for the other part of the screen
+    if (bisectedW and not bisectedH) or (bisectedH and not bisectedW) then
+        local otherWidth = bisectedW and areaLeftHorizontally or visibleWidth
+        local otherHeight = bisectedH and areaLeftVertically or visibleHeight
+        local otherX, otherY
+        
+        if bisectedW then
+            otherX = (visibleRight < WIDTH) and frame.x or WIDTH - otherWidth  -- Opposite side of the visible area
+            otherY = visibleBottom  -- Same vertical position as the visible area
+        else -- bisectedH
+            otherY = (visibleTop < HEIGHT) and frame.y - frame.height / 2 or frame.y - otherHeight + frame.height / 2  -- Opposite side of the visible area
+            otherX = visibleLeft  -- Same horizontal position as the visible area
+        end
+        
+        -- Adjust otherX and otherY to be relative to the frame's position
+        local relativeX = otherX - (frame.x - frame.width / 2)
+        local relativeY = otherY - (frame.y - frame.height / 2)
+        
+        local otherRatio = {
+            wR = otherWidth / frame.width,
+            hR = otherHeight / frame.height,
+            xR = relativeX / frame.width,
+            yR = relativeY / frame.height,
+        }
+        table.insert(ratios, otherRatio)
+    end
+    
+    -- Return the ratio tables for the visible area and, if applicable, the other area
+    return ratios
+end
+
+
+
+
+
+
+function drawRatioTablesToScreen(ratioTables, aColor)
+    pushStyle()
+    noFill()
+    stroke(aColor or color(255, 0, 0)) -- Red color for visibility
+    strokeWidth(40)
+    
+    for _, ratio in ipairs(ratioTables) do
+        -- Calculate the rectangle's position and size based on the screen dimensions and the ratio table
+        local rectX = WIDTH * ratio.xR
+        local rectY = HEIGHT * ratio.yR
+        local rectWidth = WIDTH * ratio.wR
+        local rectHeight = HEIGHT * ratio.hR
+        
+        -- Draw the rectangle
+        rect(rectX, rectY, rectWidth, rectHeight)
+    end
+    
+    popStyle()
+end
+
+
+
 function ZoomScroller:visibleAreaRatio(frame)
     -- Calculate the visible portion of the frame in screen coordinates
     local visibleLeft = math.max(frame.x - frame.width / 2, 0)
@@ -26,7 +113,7 @@ function drawRatioTableToScreen(ratioTable, aColor)
     pushStyle() -- Save the current drawing style settings
     noFill() -- No fill for the rectangle
     stroke(aColor or color(255, 0, 0) ) -- Red stroke color for visibility
-    strokeWidth(30) -- Set the stroke width
+    strokeWidth(25) -- Set the stroke width
     
     -- Calculate the rectangle's position and size based on the screen dimensions and the ratio table
     local rectX = WIDTH * ratioTable.xR
@@ -136,7 +223,7 @@ function ZoomScroller:drawRatioAreas(visibleAreaRatios, aColor)
     pushStyle()  -- Save the current drawing style settings
     noFill()  -- Don't fill the rectangles
     stroke(aColor or color(255, 0, 0, 150))  -- Set the stroke color to semi-transparent red
-    strokeWidth(15)  -- Set the stroke width
+    strokeWidth(10)  -- Set the stroke width
     
     for _, ratio in ipairs(visibleAreaRatios) do
         -- Calculate the dimensions and position of each rectangle based on screen size and ratio

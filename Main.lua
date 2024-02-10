@@ -80,7 +80,7 @@ function setup()
     parameter.watch("motesNotDrawn")
     parameter.watch("redFrames")
     parameter.watch("greenFrames")
-    parameter.watch("preWrappedAreas")
+    parameter.watch("ratioTableCount")
     
     shouldTest = true
     if shouldTest then
@@ -149,8 +149,9 @@ function draw()
     zoomScroller:drawRatioAreas(ratioAreas, color(217, 232, 83, 132))
     
     drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
-    
-    for i, mote in ipairs(motes) do
+    drawRatioTablesToScreen(zoomScroller:visibleAreaRatios(frame), color(206, 86, 85, 130))
+   
+     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
