@@ -2,10 +2,13 @@
     
 function ZoomScroller:visibleAreaRatios(frame)
     -- Calculate the visible portion of the frame in screen coordinates
-    local visibleLeft = math.max(frame.x - frame.width / 2, 0)
-    local visibleRight = math.min(frame.x + frame.width / 2, WIDTH)
-    local visibleTop = math.min(frame.y + frame.height / 2, HEIGHT)
-    local visibleBottom = math.max(frame.y - frame.height / 2, 0)
+    local fHalfWidth = frame.width / 2
+    local fHalfHeight = frame.height / 2
+    local visibleRight = math.min(frame.x + fHalfWidth, 0)
+    local visibleLeft = math.max(frame.x - fHalfWidth, 0)
+    local visibleRight = math.min(frame.x + fHalfWidth, WIDTH)
+    local visibleTop = math.min(frame.y + fHalfHeight, HEIGHT)
+    local visibleBottom = math.max(frame.y - fHalfHeight, 0)
     
     -- Calculate the visible area's width and height
     local visibleWidth = visibleRight - visibleLeft
@@ -15,8 +18,8 @@ function ZoomScroller:visibleAreaRatios(frame)
     local visibleRatio = {
         wR = visibleWidth / frame.width,
         hR = visibleHeight / frame.height,
-        xR = (visibleLeft - (frame.x - frame.width / 2)) / frame.width,
-        yR = (visibleBottom - (frame.y - frame.height / 2)) / frame.height,
+        xR = (visibleLeft - (frame.x - fHalfWidth)) / frame.width,
+        yR = (visibleBottom - (frame.y - fHalfHeight)) / frame.height,
     }
     
     -- Initialize the ratios table with the visible area ratio
@@ -35,16 +38,16 @@ function ZoomScroller:visibleAreaRatios(frame)
         local otherX, otherY
         
         if bisectedW then
-            otherX = (visibleRight < WIDTH) and frame.x - frame.width / 2 or frame.x - otherWidth + frame.width / 2  -- Opposite side of the visible area
+            otherX = (visibleRight < WIDTH) and frame.x - fHalfWidth or frame.x - otherWidth + fHalfWidth  -- Opposite side of the visible area
             otherY = visibleBottom  -- Same vertical position as the visible area
         else -- bisectedH
-            otherY = (visibleTop < HEIGHT) and frame.y - frame.height / 2 or frame.y - otherHeight + frame.height / 2  -- Opposite side of the visible area
+            otherY = (visibleTop < HEIGHT) and frame.y - fHalfHeight or frame.y - otherHeight + fHalfHeight  -- Opposite side of the visible area
             otherX = visibleLeft  -- Same horizontal position as the visible area
         end
         
         -- Adjust otherX and otherY to be relative to the frame's position
-        local relativeX = otherX - (frame.x - frame.width / 2)
-        local relativeY = otherY - (frame.y - frame.height / 2)
+        local relativeX = otherX - (frame.x - fHalfWidth)
+        local relativeY = otherY - (frame.y - fHalfHeight)
         
         local otherRatio = {
             wR = otherWidth / frame.width,
