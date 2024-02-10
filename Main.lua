@@ -1,4 +1,4 @@
-MOTE_SIZE = 2
+MOTE_SIZE = 2.5
 MOTE_COUNT = 3000
 TIMESCALE = 1
 WIND_ANGLE = 0
@@ -79,10 +79,12 @@ function setup()
     parameter.watch("motesDrawn")
     parameter.watch("motesNotDrawn")
     parameter.watch("redFrames")
+    parameter.watch("greenFrames")
     parameter.watch("preWrappedAreas")
     
-    shouldTest = false
+    shouldTest = true
     if shouldTest then
+        testVisibleAreas()
         testNeighborDetection()
         testWrappedNeighbors()
     end
@@ -124,12 +126,13 @@ function draw()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
-    local visibleAreas = zoomScroller:visibleAreas(frame)
-    drawFrameAreas(visibleAreas)    
+    local visibleAreas, ratioAreas = zoomScroller:visibleAreasWithRatios(frame)
+   -- drawFrameAreas(visibleAreas)    
 
-    local redFrames = zoomScroller:calculateRedFrameVisibleAreas(frame)
-    --drawFrameAreas(redFrames, color(255, 14, 0))   
-    
+   -- local redFrames = zoomScroller:calculateRedFrameVisibleAreas(frame)
+  --  drawFrameAreas(redFrames, color(255, 14, 0))   
+    --zoomScroller:placeShapesAlongTop(frame)
+    --[[
     candidates = zoomScroller:visibleAreas2(frame)
     drawFrameAreas(candidates, color(236, 221, 67))
     
@@ -139,7 +142,13 @@ function draw()
     drawMiniFrame(frame)
     local rawAreas = zoomScroller:defineRawTilingAreas(frame)
     zoomScroller:drawVisibleCornersOfRawAreas(rawAreas, frame, true)
-    ZoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, true)
+    zoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, true)
+    ]]
+
+    zoomScroller:drawAreasXYWH(zoomScroller:visibleAreasXYWH(frame), color(67, 221, 236, 124))
+    zoomScroller:drawRatioAreas(ratioAreas, color(217, 232, 83, 132))
+    
+    drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
     
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
