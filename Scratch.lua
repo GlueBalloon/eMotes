@@ -35,7 +35,7 @@ function ZoomScroller:visibleAreaRatios(frame)
         local otherX, otherY
         
         if bisectedW then
-            otherX = (visibleRight < WIDTH) and frame.x or WIDTH - otherWidth  -- Opposite side of the visible area
+            otherX = (visibleRight < WIDTH) and frame.x - frame.width / 2 or frame.x - otherWidth + frame.width / 2  -- Opposite side of the visible area
             otherY = visibleBottom  -- Same vertical position as the visible area
         else -- bisectedH
             otherY = (visibleTop < HEIGHT) and frame.y - frame.height / 2 or frame.y - otherHeight + frame.height / 2  -- Opposite side of the visible area
