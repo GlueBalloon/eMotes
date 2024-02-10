@@ -58,12 +58,81 @@ function ZoomScroller:visibleAreaRatios(frame)
         table.insert(ratios, otherRatio)
     end
     
-    -- Return the ratio tables for the visible area and, if applicable, the other area
+    -- Handle corner visibility: when neither full bisection nor full visibility occurs
+    if not (visibleWidth == WIDTH or visibleHeight == HEIGHT) then
+        -- Calculate positions of the four corners of the frame
+        local topLeft = {x = frame.x - fHalfWidth, y = frame.y + fHalfHeight}
+        local topRight = {x = frame.x + fHalfWidth, y = frame.y + fHalfHeight}
+        local bottomLeft = {x = frame.x - fHalfWidth, y = frame.y - fHalfHeight}
+        local bottomRight = {x = frame.x + fHalfWidth, y = frame.y - fHalfHeight}
+        visibleCorner = nil
+        local topHeights, bottomHeights, leftWidths, rightWidthsy
+        if (topLeft.x >= 0 and topLeft.x <= WIDTH and topLeft.y >= 0 and topLeft.y <= HEIGHT) then--top left
+            visibleCorner = "bottomRight"
+            topHeights, leftWidths = visibleHeight, visibleWidth
+            bottomHeights, rightWidths = otherHeight, otherWidth        
+        elseif (topRight.x >= 0 and topRight.x <= WIDTH and topRight.y >= 0 and topRight.y <= HEIGHT) then --top right 
+            visibleCorner = "bottomLeft"
+            topHeights, rightWidths = visibleHeight, visibleWidth
+            bottomHeights, leftWidths = otherHeight, otherWidth        
+        elseif (bottomLeft.x >= 0 and bottomLeft.x <= WIDTH and bottomLeft.y >= 0 and bottomLeft.y <= HEIGHT) then --bottom left
+            visibleCorner = "topRight"
+            topHeights, rightWidths = otherHeight, otherWidth    
+            bottomHeights, leftWidths = visibleHeight, visibleWidth      
+        elseif (bottomRight.x >= 0 and bottomRight.x <= WIDTH and bottomRight.y >= 0 and bottomRight.y <= HEIGHT) then --bottom right
+            visibleCorner = "topLeft"
+            topHeights, leftWidths = visibleHeight, visibleWidth
+            bottomHeights, rightWidths = otherHeight, otherWidth        
+        end
+        
+        
+        --[[
+        -- Calculate the ratio values based on the dimensions provided
+        -- Assuming 'frame' has properties 'width' and 'height' for its full dimensions
+        if visibleCorner then
+        -- Visible corner area ratio
+        local visibleAreaRatio = {
+        wR = visibleWidth / frame.width,
+        hR = topHeights / frame.height,
+        xR = (visibleCorner == "topRight" or visibleCorner == "bottomRight") and (1 - (visibleWidth / frame.width)) or 0,
+        yR = (visibleCorner == "bottomLeft" or visibleCorner == "bottomRight") and (1 - (topHeights / frame.height)) or 0,
+        }
+        table.insert(ratios, visibleAreaRatio)
+        
+        -- Opposite corner area ratio (other area)
+        local oppositeAreaRatio = {
+        wR = otherWidth / frame.width,
+        hR = bottomHeights / frame.height,
+        xR = (visibleCorner == "topLeft" or visibleCorner == "bottomLeft") and (1 - (otherWidth / frame.width)) or 0,
+        yR = (visibleCorner == "topLeft" or visibleCorner == "topRight") and (1 - (bottomHeights / frame.height)) or 0,
+        }
+        table.insert(ratios, oppositeAreaRatio)
+        ]]
+        
+        -- Additional areas created by the corner being visible
+        -- These areas are the sides that get exposed when a corner is visible
+        --[[
+        local sideVerticalRatio = {
+            wR = (visibleCorner == "topLeft" or visibleCorner == "bottomLeft") and rightWidths / frame.width or leftWidths / frame.width,
+            hR = (HEIGHT - visibleHeight - bottomHeights) / frame.height,  -- The vertical gap
+            xR = (visibleCorner == "topRight" or visibleCorner == "bottomRight") and 0 or (1 - ((visibleCorner == "topLeft" or visibleCorner == "bottomLeft") and rightWidths / frame.width or leftWidths / frame.width)),
+            yR = (visibleCorner == "bottomLeft" or visibleCorner == "bottomRight") and (bottomHeights / frame.height) or (visibleHeight / frame.height),
+        }
+        table.insert(ratios, sideVerticalRatio)
+        
+        local sideHorizontalRatio = {
+            wR = (WIDTH - visibleWidth - otherWidth) / frame.width,  -- The horizontal gap
+            hR = (visibleCorner == "bottomLeft" or visibleCorner == "bottomRight") and topHeights / frame.height or bottomHeights / frame.height,
+            xR = (visibleCorner == "topRight" or visibleCorner == "bottomRight") and (visibleWidth / frame.width) or (otherWidth / frame.width),
+            yR = (visibleCorner == "topLeft" or visibleCorner == "topRight") and 0 or (1 - ((visibleCorner == "bottomLeft" or visibleCorner == "bottomRight") and topHeights / frame.height or bottomHeights / frame.height)),
+        }
+        table.insert(ratios, sideHorizontalRatio)
+        ]]
+    end
+    
+    -- Return the array of ratio tables
     return ratios
 end
-
-
-
 
 
 

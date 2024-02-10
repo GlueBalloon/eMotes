@@ -78,11 +78,11 @@ function setup()
     parameter.watch("fps")
     parameter.watch("motesDrawn")
     parameter.watch("motesNotDrawn")
-    parameter.watch("redFrames")
+    parameter.watch("visibleCorner")
     parameter.watch("greenFrames")
     parameter.watch("ratioTableCount")
     
-    shouldTest = true
+    shouldTest = false
     if shouldTest then
         testVisibleAreas()
         testNeighborDetection()
