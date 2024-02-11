@@ -72,15 +72,15 @@ function setup()
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
 
+    parameter.watch("visibleCorner")
+    parameter.watch("ratioTableCount")
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
     parameter.boolean("zoomActive", true)
     parameter.boolean("clumpAndAvoid", true)
     parameter.watch("fps")
     parameter.watch("motesDrawn")
     parameter.watch("motesNotDrawn")
-    parameter.watch("visibleCorner")
     parameter.watch("greenFrames")
-    parameter.watch("ratioTableCount")
     
     shouldTest = false
     if shouldTest then

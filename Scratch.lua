@@ -4,7 +4,6 @@ function ZoomScroller:visibleAreaRatios(frame)
     -- Calculate the visible portion of the frame in screen coordinates
     local fHalfWidth = frame.width / 2
     local fHalfHeight = frame.height / 2
-    local visibleRight = math.min(frame.x + fHalfWidth, 0)
     local visibleLeft = math.max(frame.x - fHalfWidth, 0)
     local visibleRight = math.min(frame.x + fHalfWidth, WIDTH)
     local visibleTop = math.min(frame.y + fHalfHeight, HEIGHT)
@@ -25,19 +24,19 @@ function ZoomScroller:visibleAreaRatios(frame)
     -- Initialize the ratios table with the visible area ratio
     local ratios = { visibleRatio }
     
-    -- Determine if there's a bisection
-    local areaLeftHorizontally = WIDTH - visibleWidth
-    local areaLeftVertically = HEIGHT - visibleHeight
-    local bisectedW = areaLeftHorizontally > 0
-    local bisectedH = areaLeftVertically > 0
+    -- Determine if a frame side is on screen
+    local visibleEmptyWidth = WIDTH - visibleWidth
+    local visibleEmptyHeight = HEIGHT - visibleHeight
+    local edgeOnscreenVertical = visibleEmptyWidth > 0
+    local edgeOnscreenHorizontal = visibleEmptyHeight > 0
     
     -- If there's a bisection, calculate the ratio for the other part of the screen
-    if (bisectedW and not bisectedH) or (bisectedH and not bisectedW) then
-        local otherWidth = bisectedW and areaLeftHorizontally or visibleWidth
-        local otherHeight = bisectedH and areaLeftVertically or visibleHeight
+    if (edgeOnscreenVertical and not edgeOnscreenHorizontal) or (edgeOnscreenHorizontal and not edgeOnscreenVertical) then
+        local otherWidth = edgeOnscreenVertical and visibleEmptyWidth or visibleWidth
+        local otherHeight = edgeOnscreenHorizontal and visibleEmptyHeight or visibleHeight
         local otherX, otherY
         
-        if bisectedW then
+        if edgeOnscreenVertical then
             otherX = (visibleRight < WIDTH) and frame.x - fHalfWidth or frame.x - otherWidth + fHalfWidth  -- Opposite side of the visible area
             otherY = visibleBottom  -- Same vertical position as the visible area
         else -- bisectedH
@@ -61,54 +60,67 @@ function ZoomScroller:visibleAreaRatios(frame)
     -- Handle corner visibility: when neither full bisection nor full visibility occurs
     if not (visibleWidth == WIDTH or visibleHeight == HEIGHT) then
         -- Calculate positions of the four corners of the frame
-        local topLeft = {x = frame.x - fHalfWidth, y = frame.y + fHalfHeight}
-        local topRight = {x = frame.x + fHalfWidth, y = frame.y + fHalfHeight}
-        local bottomLeft = {x = frame.x - fHalfWidth, y = frame.y - fHalfHeight}
-        local bottomRight = {x = frame.x + fHalfWidth, y = frame.y - fHalfHeight}
+        local topLeftF = {x = frame.x - fHalfWidth, y = frame.y + fHalfHeight}
+        local topRightF = {x = frame.x + fHalfWidth, y = frame.y + fHalfHeight}
+        local bottomLeftF = {x = frame.x - fHalfWidth, y = frame.y - fHalfHeight}
+        local bottomRightF = {x = frame.x + fHalfWidth, y = frame.y - fHalfHeight}
+
+        local otherWidth = WIDTH - visibleWidth
+        local otherHeight = HEIGHT - visibleHeight
+        
         visibleCorner = nil
-        local topHeights, bottomHeights, leftWidths, rightWidthsy
-        if (topLeft.x >= 0 and topLeft.x <= WIDTH and topLeft.y >= 0 and topLeft.y <= HEIGHT) then--top left
-            visibleCorner = "bottomRight"
-            topHeights, leftWidths = visibleHeight, visibleWidth
-            bottomHeights, rightWidths = otherHeight, otherWidth        
-        elseif (topRight.x >= 0 and topRight.x <= WIDTH and topRight.y >= 0 and topRight.y <= HEIGHT) then --top right 
-            visibleCorner = "bottomLeft"
-            topHeights, rightWidths = visibleHeight, visibleWidth
-            bottomHeights, leftWidths = otherHeight, otherWidth        
-        elseif (bottomLeft.x >= 0 and bottomLeft.x <= WIDTH and bottomLeft.y >= 0 and bottomLeft.y <= HEIGHT) then --bottom left
-            visibleCorner = "topRight"
-            topHeights, rightWidths = otherHeight, otherWidth    
-            bottomHeights, leftWidths = visibleHeight, visibleWidth      
-        elseif (bottomRight.x >= 0 and bottomRight.x <= WIDTH and bottomRight.y >= 0 and bottomRight.y <= HEIGHT) then --bottom right
-            visibleCorner = "topLeft"
-            topHeights, leftWidths = visibleHeight, visibleWidth
-            bottomHeights, rightWidths = otherHeight, otherWidth        
+        
+        local topHeightsF, bottomHeightsF, leftWidthsF, rightWidthsF
+        if (topLeftF.x >= 0 and topLeftF.x <= WIDTH and topLeftF.y >= 0 and topLeftF.y <= HEIGHT) then--top left
+            visibleCorner = "visibleBottomRight"
+            topHeightsF, leftWidthsF = visibleHeight, visibleWidth 
+            bottomHeightsF, rightWidthsF = otherHeight, otherWidth    
+        elseif (topRightF.x >= 0 and topRightF.x <= WIDTH and topRightF.y >= 0 and topRightF.y <= HEIGHT) then --top right 
+            visibleCorner = "visibleBottomLeft"
+            topHeightsF, rightWidthsF = otherHeight, otherWidth
+            bottomHeightsF, leftWidthsF = visibleHeight, visibleWidth        
+        elseif (bottomLeftF.x >= 0 and bottomLeftF.x <= WIDTH and bottomLeftF.y >= 0 and bottomLeftF.y <= HEIGHT) then --bottom left
+            visibleCorner = "visibleTopRight"
+            topHeightsF, rightWidthsF = otherHeight, otherWidth    
+            bottomHeightsF, leftWidthsF = visibleHeight, visibleWidth      
+        elseif (bottomRightF.x >= 0 and bottomRightF.x <= WIDTH and bottomRightF.y >= 0 and bottomRightF.y <= HEIGHT) then --bottom right
+            visibleCorner = "visibleTopLeft"
+            topHeightsF, leftWidthsF = otherHeight, otherWidth 
+            bottomHeightsF, rightWidthsF = visibleHeight, visibleWidth        
+        else
+            visibleCorner = "not found"
+            return ratios
         end
-        
-        
-        --[[
-        -- Calculate the ratio values based on the dimensions provided
-        -- Assuming 'frame' has properties 'width' and 'height' for its full dimensions
-        if visibleCorner then
-        -- Visible corner area ratio
-        local visibleAreaRatio = {
-        wR = visibleWidth / frame.width,
-        hR = topHeights / frame.height,
-        xR = (visibleCorner == "topRight" or visibleCorner == "bottomRight") and (1 - (visibleWidth / frame.width)) or 0,
-        yR = (visibleCorner == "bottomLeft" or visibleCorner == "bottomRight") and (1 - (topHeights / frame.height)) or 0,
-        }
-        table.insert(ratios, visibleAreaRatio)
-        
+            
         -- Opposite corner area ratio (other area)
-        local oppositeAreaRatio = {
-        wR = otherWidth / frame.width,
-        hR = bottomHeights / frame.height,
-        xR = (visibleCorner == "topLeft" or visibleCorner == "bottomLeft") and (1 - (otherWidth / frame.width)) or 0,
-        yR = (visibleCorner == "topLeft" or visibleCorner == "topRight") and (1 - (bottomHeights / frame.height)) or 0,
+        local frameBottomLeftRatio = {
+            wR = leftWidthsF / frame.width,
+            hR = bottomHeightsF / frame.height,
+            xR = 0,
+            yR = 0 
         }
-        table.insert(ratios, oppositeAreaRatio)
-        ]]
-        
+        local frameBottomRightRatio = {
+            wR = rightWidthsF / frame.width,
+            hR = bottomHeightsF / frame.height,
+            xR = (frame.width - rightWidthsF) / frame.width,
+            yR = 0 
+        }
+        local frameTopRightRatio = {
+            wR = rightWidthsF / frame.width,
+            hR = topHeightsF / frame.height,
+            xR = (frame.width - rightWidthsF) / frame.width,
+            yR = (frame.height - topHeightsF) / frame.height
+        }
+        local frameTopLeftRatio = {
+            wR = leftWidthsF / frame.width,
+            hR = topHeightsF / frame.height,
+            xR = 0,
+            yR = (frame.height - topHeightsF) / frame.height
+        }
+        table.insert(ratios, frameBottomLeftRatio)
+        table.insert(ratios, frameBottomRightRatio)
+        table.insert(ratios, frameTopRightRatio)
+        table.insert(ratios, frameTopLeftRatio)
         -- Additional areas created by the corner being visible
         -- These areas are the sides that get exposed when a corner is visible
         --[[
@@ -129,7 +141,7 @@ function ZoomScroller:visibleAreaRatios(frame)
         table.insert(ratios, sideHorizontalRatio)
         ]]
     end
-    
+    ratioTableCount = #ratios
     -- Return the array of ratio tables
     return ratios
 end
