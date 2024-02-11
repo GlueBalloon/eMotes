@@ -149,7 +149,7 @@ function draw()
     zoomScroller:drawRatioAreas(ratioAreas, color(217, 232, 83, 132))
     
     drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
-    drawRatioTablesToScreen(zoomScroller:visibleAreaRatios(frame), color(206, 86, 85, 130))
+    drawRatioTablesToScreen(zoomScroller:visibleAreaRatios(frame), color(89, 229, 72, 204))
    
      for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
