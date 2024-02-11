@@ -11,21 +11,27 @@ end
 function ZoomScroller:repositionBoundsIfOffscreen()
     -- Reposition frame if offscreen
     local bounds = self.frame
-    -- Check if bounds are offscreen to the right
-    if bounds.x > WIDTH then
-        bounds.x = bounds.x - 2 * bounds.width
+    
+    -- Width and height for easier reference
+    local halfWidth = bounds.width / 2
+    local halfHeight = bounds.height / 2
+    
+    -- Check if bounds are offscreen and reposition to immediately adjacent position
+    -- Right edge offscreen
+    if bounds.x - halfWidth > WIDTH then
+        bounds.x = bounds.x - bounds.width
     end
-    -- Check if bounds are offscreen to the left
-    if bounds.x + bounds.width < 0 then
-        bounds.x = bounds.x + 2 * bounds.width
+    -- Left edge offscreen
+    if bounds.x + halfWidth < 0 then
+        bounds.x = bounds.x + bounds.width
     end
-    -- Check if bounds are offscreen to the bottom
-    if bounds.y > HEIGHT then
-        bounds.y = bounds.y - 2 * bounds.height
+    -- Bottom edge offscreen
+    if bounds.y - halfHeight > HEIGHT then
+        bounds.y = bounds.y - bounds.height
     end
-    -- Check if bounds are offscreen to the top
-    if bounds.y + bounds.height < 0 then
-        bounds.y = bounds.y + 2 * bounds.height
+    -- Top edge offscreen
+    if bounds.y + halfHeight < 0 then
+        bounds.y = bounds.y + bounds.height
     end
 end
 
