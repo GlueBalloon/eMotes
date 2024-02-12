@@ -140,6 +140,7 @@ end
 
 
 
+
 function drawRatioTablesToScreen(ratioTables, aColor)
     pushStyle()
     noFill()
@@ -295,6 +296,62 @@ function ZoomScroller:visibleAreasWithRatios(frame)
     return visibleAreas, visibleAreaRatios
 end
 
+function ZoomScroller:visibleAreasWithRatios89(frame)
+    local visibleAreas = {}
+    local visibleAreaRatios = {}  -- New table for storing visible area ratios
+    
+    -- Calculate the range of tiles to consider based directly on frame's position and size
+    local tilesX = math.ceil(WIDTH / frame.width)
+    local tilesY = math.ceil(HEIGHT / frame.height)
+    
+    for i = -1, tilesX do
+        for j = -1, tilesY do
+            -- Directly calculate starting points for tiling based on the frame's position
+            local startX = frame.x + (i * frame.width) - frame.width / 2
+            local startY = frame.y + (j * frame.height) - frame.height / 2
+            
+            -- Define the visible area bounds
+            local left = startX
+            local right = startX + frame.width
+            local top = startY + frame.height
+            local bottom = startY
+            
+            -- Ensure the visible area is within screen bounds
+            if right > 0 and left < WIDTH and bottom < HEIGHT and top > 0 then
+                local visibleArea = {
+                    left = math.max(left, 0),
+                    right = math.min(right, WIDTH),
+                    top = math.min(top, HEIGHT),
+                    bottom = math.max(bottom, 0),
+                }
+                
+                -- Calculate ratios for the visible area relative to the frame
+                local ratio = {
+                    leftRatio = (visibleArea.left - left) / frame.width,
+                    rightRatio = (right - visibleArea.right) / frame.width,
+                    topRatio = (top - visibleArea.top) / frame.height,
+                    bottomRatio = (visibleArea.bottom - bottom) / frame.height,
+                }
+                
+                -- Add the visible area and its ratio if it's partially visible
+                table.insert(visibleAreas, visibleArea)
+                table.insert(visibleAreaRatios, ratio)
+            end
+        end
+    end
+    
+    return visibleAreas, visibleAreaRatios
+end
+
+
+
+
+
+
+
+
+
+
 function ZoomScroller:drawRatioAreas(visibleAreaRatios, aColor)
     pushStyle()  -- Save the current drawing style settings
     noFill()  -- Don't fill the rectangles
@@ -420,7 +477,7 @@ function drawFrameAreas(frameAreas, aColor)
     noFill()
     local strokeColor = aColor or color(0, 255, 0)
     stroke(strokeColor)
-    strokeWidth(10)
+    strokeWidth(20)
     
     for _, area in ipairs(frameAreas) do
         -- Draw a rectangle for each visible area
@@ -480,7 +537,7 @@ function ZoomScroller:placeShapesAlongTop(frame)
     popStyle()
 end
 
-function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleAreas)
+function ZoomScroller:getDrawingParameters1(nativePosition, nativeSize, visibleAreas)
     -- Directly adapt from Mote:draw logic to calculate drawing parameters
     for _, area in ipairs(visibleAreas) do
         -- Check if the mote's native position is within this visible area
@@ -505,6 +562,35 @@ function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleAr
     -- Return nil if the mote is not within any visible area
     return nil
 end
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleAreaRatios)
+    for _, ratio in ipairs(visibleAreaRatios) do
+        -- Calculate the screen area based on ratios
+        local areaLeft = ratio.xR * WIDTH
+        local areaTop = (1 - ratio.yR) * HEIGHT
+        local areaWidth = ratio.wR * WIDTH
+        local areaHeight = ratio.hR * HEIGHT
+        
+        -- Calculate the bottom and right edges of the area
+        local areaRight = areaLeft + areaWidth
+        local areaBottom = areaTop - areaHeight
+        
+        -- Check if the mote's native position is within this screen area
+        if nativePosition.x >= areaLeft and nativePosition.x <= areaRight and
+        nativePosition.y <= areaTop and nativePosition.y >= areaBottom then
+            -- Calculate the mote's position and size relative to the visible area
+            local adjustedPosX = (nativePosition.x - areaLeft) / ratio.wR + (self.frame.x - self.frame.width / 2)
+            local adjustedPosY = (nativePosition.y - areaBottom) / ratio.hR + (self.frame.y - self.frame.height / 2)
+            local adjustedSize = nativeSize * (self.frame.width / WIDTH) -- Assuming uniform scaling for simplicity
+            
+            return {x = adjustedPosX, y = adjustedPosY, size = adjustedSize}
+        end
+    end
+    
+    -- Return nil if the mote is not within any visible area
+    return nil
+end
+
 
 function ZoomScroller:xyFrameToScreen(x, y, frame)
     local scaleFactor = WIDTH / frame.width

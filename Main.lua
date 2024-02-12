@@ -126,8 +126,8 @@ function draw()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
-    local visibleAreas, ratioAreas = zoomScroller:visibleAreasWithRatios(frame)
-   -- drawFrameAreas(visibleAreas)    
+    local visibleAreas, ratioAreas = zoomScroller:visibleAreasWithRatios89(frame)
+    drawFrameAreas(visibleAreas, color(67, 166, 236, 157))    
 
    -- local redFrames = zoomScroller:calculateRedFrameVisibleAreas(frame)
   --  drawFrameAreas(redFrames, color(255, 14, 0))   
@@ -145,17 +145,18 @@ function draw()
     zoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, true)
     ]]
 
-    zoomScroller:drawAreasXYWH(zoomScroller:visibleAreasXYWH(frame), color(67, 221, 236, 124))
-    zoomScroller:drawRatioAreas(ratioAreas, color(217, 232, 83, 132))
+  --  zoomScroller:drawAreasXYWH(zoomScroller:visibleAreasXYWH(frame), color(67, 221, 236, 124))
+    zoomScroller:drawRatioAreas(ratioAreas, color(232, 103, 83, 132))
     
-    drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
-    drawRatioTablesToScreen(zoomScroller:visibleAreaRatios(frame), color(89, 229, 72, 204))
+ --   drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
+ --   visibleRatioAreas = zoomScroller:visibleAreaRatios(frame)
+ --   drawRatioTablesToScreen(visibleRatioAreas, color(89, 229, 72, 204))
    
      for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        local drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size, visibleAreas)
+        local drawingParams = zoomScroller:getDrawingParameters1(mote.position, mote.size, visibleAreas)
         if drawingParams then
             mote:drawWithParams(drawingParams.x, drawingParams.y, drawingParams.size)
             motesDrawn = motesDrawn + 1
