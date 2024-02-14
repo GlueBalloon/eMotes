@@ -120,37 +120,193 @@ function draw()
     spriteMode(CENTER)
     
     pushStyle()
-    strokeWidth(10)
+    strokeWidth(5)
     stroke(255, 14, 0)
     noFill()
     rect(frame.x - frame.width / 2, frame.y - frame.height / 2, frame.width, frame.height)
     popStyle()
     
     local visibleAreas, ratioAreas = zoomScroller:visibleAreasWithRatios89(frame)
-    drawFrameAreas(visibleAreas, color(67, 166, 236, 157))    
+    -- local visibleRatios, _ = zoomScroller:visibleAreasWithRatios890(frame)
+    drawFrameFromCoordinates(visibleAreas, color(67, 166, 236, 157), 13)    
+    zoomScroller:drawRatioAreas(ratioAreas, color(232, 103, 83, 102), 40)
 
-   -- local redFrames = zoomScroller:calculateRedFrameVisibleAreas(frame)
-  --  drawFrameAreas(redFrames, color(255, 14, 0))   
-    --zoomScroller:placeShapesAlongTop(frame)
-    --[[
-    candidates = zoomScroller:visibleAreas2(frame)
-    drawFrameAreas(candidates, color(236, 221, 67))
-    
-    pCandidates = zoomScroller:visibleAreas3(frame)
-    drawFrameAreas(pCandidates, color(166, 67, 236))
-    
-    drawMiniFrame(frame)
-    local rawAreas = zoomScroller:defineRawTilingAreas(frame)
-    zoomScroller:drawVisibleCornersOfRawAreas(rawAreas, frame, true)
-    zoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, true)
-    ]]
 
-  --  zoomScroller:drawAreasXYWH(zoomScroller:visibleAreasXYWH(frame), color(67, 221, 236, 124))
-    zoomScroller:drawRatioAreas(ratioAreas, color(232, 103, 83, 132))
+    function drawAsFrameAndRatio(frame, position, size)
+        -- Draw directly using the given position
+        pushStyle()
+        fill(255, 0, 0) -- Set color to red for the direct drawing
+        ellipse(position.x, position.y, size + 10)
+        popStyle()
+        
+        -- Now convert the position to a ratio of the frame's dimensions
+        local ratioX = (position.x - (frame.x - frame.width / 2)) / frame.width
+        local ratioY = (position.y - (frame.y - frame.height / 2)) / frame.height
+        
+        -- Translate the ratios back to screen positions, assuming the frame is fully visible on the screen
+        local screenPosX = ratioX * WIDTH + (frame.x - frame.width / 2)
+        local screenPosY = ratioY * HEIGHT + (frame.y - frame.height / 2)
+        
+        -- Draw using the calculated ratios, should overlap the first ellipse if calculations are correct
+        pushStyle()
+        fill(0, 255, 0) -- Set color to green for the ratio-based drawing
+        ellipse(screenPosX, screenPosY, size)
+        popStyle()
+    end
+    local frame = {
+        x = WIDTH / 2,
+        y = HEIGHT / 2,
+        width = WIDTH,  -- Assuming the frame covers the whole screen
+        height = HEIGHT
+    }
     
- --   drawRatioTableToScreen(zoomScroller:visibleAreaRatio(frame), color(98, 85, 206, 130))
- --   visibleRatioAreas = zoomScroller:visibleAreaRatios(frame)
- --   drawRatioTablesToScreen(visibleRatioAreas, color(89, 229, 72, 204))
+    -- Your object's position, for example:
+    local position = {
+        x = WIDTH / 2 + 100,
+        y = HEIGHT / 2 + 100
+    }
+    
+    -- The size of the ellipse
+    local size = 20
+    
+    -- Now call the draw function
+    drawAsFrameAndRatio(frame, position, size)    
+      
+
+    -- Define the frame and the visibleArea
+    local frame2 = {
+        x = WIDTH / 2,
+        y = HEIGHT / 2,
+        width = WIDTH, -- Assuming the frame covers the whole screen
+        height = HEIGHT
+    }
+    
+    local visibleArea2 = {
+        left = 100,
+        right = WIDTH - 100,
+        top = HEIGHT - 100,
+        bottom = 100
+    }
+    
+    -- Call the function to draw ellipses at the corners
+    drawCornersVisibleAreaAndRatio(visibleArea2, frame2)
+    
+
+    function drawCornersForMultipleAreas(areas)
+        for _, bounds in ipairs(areas) do
+            -- Define the corners based on the bounds
+            local corners = {
+                topLeft = {x = bounds.left, y = bounds.top},
+                topRight = {x = bounds.right, y = bounds.top},
+                bottomLeft = {x = bounds.left, y = bounds.bottom},
+                bottomRight = {x = bounds.right, y = bounds.bottom}
+            }
+            
+            -- Draw ellipses at the corners using screen positions
+            pushStyle()
+            fill(72, 0, 255) -- Red for direct screen position
+            for _, corner in pairs(corners) do
+                ellipse(corner.x, corner.y, 30)
+            end
+            popStyle()
+            
+            -- Convert corners to ratios based on the full screen as the frame
+            local cornerRatios = {
+                topLeft = {
+                    xR = (corners.topLeft.x) / WIDTH,
+                    yR = (corners.topLeft.y) / HEIGHT
+                },
+                topRight = {
+                    xR = (corners.topRight.x) / WIDTH,
+                    yR = (corners.topRight.y) / HEIGHT
+                },
+                bottomLeft = {
+                    xR = (corners.bottomLeft.x) / WIDTH,
+                    yR = (corners.bottomLeft.y) / HEIGHT
+                },
+                bottomRight = {
+                    xR = (corners.bottomRight.x) / WIDTH,
+                    yR = (corners.bottomRight.y) / HEIGHT
+                }
+            }
+            
+            -- Draw ellipses at the corners using ratios converted back to screen positions
+            pushStyle()
+            fill(0, 255, 0) -- Green for ratio position
+            for _, ratio in pairs(cornerRatios) do
+                local screenPosX = ratio.xR * WIDTH
+                local screenPosY = ratio.yR * HEIGHT
+                ellipse(screenPosX, screenPosY, 10)
+            end
+            popStyle()
+        end
+    end    
+
+    drawCornersForMultipleAreas(visibleAreas)
+
+    function drawCornersForRatioTables(ratioTables, frame)
+        for _, ratio in ipairs(ratioTables) do
+            -- Convert ratio back to screen positions for corners
+            local corners = {
+                topLeft = {
+                    x = frame.x - frame.width / 2 + ratio.leftRatio * frame.width,
+                    y = frame.y + frame.height / 2 - ratio.topRatio * frame.height
+                },
+                topRight = {
+                    x = frame.x + frame.width / 2 - ratio.rightRatio * frame.width,
+                    y = frame.y + frame.height / 2 - ratio.topRatio * frame.height
+                },
+                bottomLeft = {
+                    x = frame.x - frame.width / 2 + ratio.leftRatio * frame.width,
+                    y = frame.y - frame.height / 2 + ratio.bottomRatio * frame.height
+                },
+                bottomRight = {
+                    x = frame.x + frame.width / 2 - ratio.rightRatio * frame.width,
+                    y = frame.y - frame.height / 2 + ratio.bottomRatio * frame.height
+                }
+            }
+    
+            -- Draw ellipses at corners
+            pushStyle()
+            fill(255, 0, 162) -- Pink for corners from ratio to screen position
+            for _, corner in pairs(corners) do
+                ellipse(corner.x, corner.y, 28)
+            end
+            popStyle()
+    
+            -- Convert corners back to ratios for demonstration
+            local cornerRatios = {
+                topLeft = {
+                    xR = (corners.topLeft.x - (frame.x - frame.width / 2)) / frame.width,
+                    yR = ((frame.y + frame.height / 2) - corners.topLeft.y) / frame.height
+                },
+                topRight = {
+                    xR = ((frame.x + frame.width / 2) - corners.topRight.x) / frame.width,
+                    yR = ((frame.y + frame.height / 2) - corners.topRight.y) / frame.height
+                },
+                bottomLeft = {
+                    xR = (corners.bottomLeft.x - (frame.x - frame.width / 2)) / frame.width,
+                    yR = (corners.bottomLeft.y - (frame.y - frame.height / 2)) / frame.height
+                },
+                bottomRight = {
+                    xR = ((frame.x + frame.width / 2) - corners.bottomRight.x) / frame.width,
+                    yR = (corners.bottomRight.y - (frame.y - frame.height / 2)) / frame.height
+                }
+            }
+    
+            -- Draw ellipses at corners from ratios converted back
+            pushStyle()
+            fill(217, 255, 0) -- Yellow for corners back from ratios
+            for _, ratioCorner in pairs(cornerRatios) do
+                local screenPosX = frame.x - frame.width / 2 + ratioCorner.xR * frame.width
+                local screenPosY = frame.y + frame.height / 2 - ratioCorner.yR * frame.height
+                ellipse(screenPosX, screenPosY, 10)
+            end
+            popStyle()
+        end
+    end
+    
+    drawCornersForRatioTables(ratioAreas, frame)
    
      for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)

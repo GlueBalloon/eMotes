@@ -186,11 +186,11 @@ function ZoomScroller:visibleAreaRatio(frame)
     return ratio
 end
 
-function drawRatioTableToScreen(ratioTable, aColor)
+function drawRatioTableToScreen(ratioTable, aColor, lineWidth)
     pushStyle() -- Save the current drawing style settings
     noFill() -- No fill for the rectangle
     stroke(aColor or color(255, 0, 0) ) -- Red stroke color for visibility
-    strokeWidth(25) -- Set the stroke width
+    strokeWidth(lineWidth or 25) -- Set the stroke width
     
     -- Calculate the rectangle's position and size based on the screen dimensions and the ratio table
     local rectX = WIDTH * ratioTable.xR
@@ -296,6 +296,7 @@ function ZoomScroller:visibleAreasWithRatios(frame)
     return visibleAreas, visibleAreaRatios
 end
 
+--correct table count, one table is not ratios
 function ZoomScroller:visibleAreasWithRatios89(frame)
     local visibleAreas = {}
     local visibleAreaRatios = {}  -- New table for storing visible area ratios
@@ -352,11 +353,14 @@ end
 
 
 
-function ZoomScroller:drawRatioAreas(visibleAreaRatios, aColor)
+
+
+
+function ZoomScroller:drawRatioAreas(visibleAreaRatios, aColor, lineWidth)
     pushStyle()  -- Save the current drawing style settings
     noFill()  -- Don't fill the rectangles
     stroke(aColor or color(255, 0, 0, 150))  -- Set the stroke color to semi-transparent red
-    strokeWidth(10)  -- Set the stroke width
+    strokeWidth(lineWidth or 10)  -- Set the stroke width
     
     for _, ratio in ipairs(visibleAreaRatios) do
         -- Calculate the dimensions and position of each rectangle based on screen size and ratio
@@ -376,46 +380,59 @@ end
 
 
 
-function ZoomScroller:visibleAreaTablesToXYWH(visibleAreas)
-    local xywhAreas = {}
+
+function drawCornersVisibleAreaAndRatio(visibleArea, frame)
+    -- Define the corners based on the visibleArea table
+    local corners = {
+        topLeft = {x = visibleArea.left, y = visibleArea.top},
+        topRight = {x = visibleArea.right, y = visibleArea.top},
+        bottomLeft = {x = visibleArea.left, y = visibleArea.bottom},
+        bottomRight = {x = visibleArea.right, y = visibleArea.bottom}
+    }
     
-    for _, area in ipairs(visibleAreas) do
-        local x = area.left
-        -- Convert top to y by subtracting height from top (Codea's y increases upwards)
-        local y = area.bottom
-        local width = area.right - area.left
-        local height = area.top - area.bottom
-        
-        table.insert(xywhAreas, {x = x, y = y, width = width, height = height})
+    -- Draw ellipses at the corners using screen positions
+    pushStyle()
+    fill(255, 0, 0) -- Red for direct screen position
+    for _, corner in pairs(corners) do
+        ellipse(corner.x, corner.y, 40)
     end
+    popStyle()
     
-    return xywhAreas
-end
-
-function ZoomScroller:visibleAreasXYWH(frame)
-    -- First, calculate the visible areas using the original method
-    local visibleAreas = self:visibleAreas(frame)
+    -- Convert corners to ratios
+    local cornerRatios = {
+        topLeft = {
+            xR = (corners.topLeft.x - (frame.x - frame.width / 2)) / frame.width,
+            yR = (corners.topLeft.y - (frame.y - frame.height / 2)) / frame.height
+        },
+        topRight = {
+            xR = (corners.topRight.x - (frame.x - frame.width / 2)) / frame.width,
+            yR = (corners.topRight.y - (frame.y - frame.height / 2)) / frame.height
+        },
+        bottomLeft = {
+            xR = (corners.bottomLeft.x - (frame.x - frame.width / 2)) / frame.width,
+            yR = (corners.bottomLeft.y - (frame.y - frame.height / 2)) / frame.height
+        },
+        bottomRight = {
+            xR = (corners.bottomRight.x - (frame.x - frame.width / 2)) / frame.width,
+            yR = (corners.bottomRight.y - (frame.y - frame.height / 2)) / frame.height
+        }
+    }
     
-    -- Now, convert those areas to the xywh format
-    local xywhAreas = self:visibleAreaTablesToXYWH(visibleAreas)
-    
-    return xywhAreas
-end
-
-
-function ZoomScroller:drawAreasXYWH(visibleAreas, aColor)
-    pushStyle() -- Save current drawing style settings
-    noFill() -- Don't fill the rectangles
-    stroke(aColor or color(255, 0, 188)) -- Set stroke color to red for visibility
-    strokeWidth(20) -- Set the stroke width
-    
-    for _, area in ipairs(visibleAreas) do
-        -- Draw each rectangle using the provided x, y, width, and height
-        rect(area.x, area.y, area.width, area.height)
+    -- Draw ellipses at the corners using ratios converted back to screen positions
+    pushStyle()
+    fill(0, 255, 0) -- Green for ratio position
+    for _, ratio in pairs(cornerRatios) do
+        local screenPosX = ratio.xR * frame.width + (frame.x - frame.width / 2)
+        local screenPosY = ratio.yR * frame.height + (frame.y - frame.height / 2)
+        ellipse(screenPosX, screenPosY, 10)
     end
-    
-    popStyle() -- Restore previous drawing style settings
+    popStyle()
 end
+
+
+
+
+
 
 
 
@@ -447,32 +464,9 @@ end
 
 
 
--- Function to draw a mini frame at a fixed position and size on the screen
-function drawMiniFrame(frame)
-    pushStyle()
-    noFill()
-    stroke(255, 0, 0) -- Red color for visibility
-    strokeWidth(2)
-    
-    -- Calculate the fixed-size representation for frame corners
-    local topLeftX, topLeftY = xyFrameToFixedRepresentation(frame, frame.x - frame.width / 2, frame.y + frame.height / 2)
-    local topRightX, topRightY = xyFrameToFixedRepresentation(frame, frame.x + frame.width / 2, frame.y + frame.height / 2)
-    local bottomLeftX, bottomLeftY = xyFrameToFixedRepresentation(frame, frame.x - frame.width / 2, frame.y - frame.height / 2)
-    local bottomRightX, bottomRightY = xyFrameToFixedRepresentation(frame, frame.x + frame.width / 2, frame.y - frame.height / 2)
-    
-    -- Draw lines between the calculated corners to represent the mini frame
-    line(topLeftX, topLeftY, topRightX, topRightY)
-    line(topRightX, topRightY, bottomRightX, bottomRightY)
-    line(bottomRightX, bottomRightY, bottomLeftX, bottomLeftY)
-    line(bottomLeftX, bottomLeftY, topLeftX, topLeftY)
-    
-    popStyle()
-    
-    return vec2(topLeftX, topLeftY), vec2(topRightX, topRightY),
-    vec2(bottomLeftX, bottomLeftY), vec2(bottomRightX, bottomRightY)
-end
 
-function drawFrameAreas(frameAreas, aColor)
+
+function drawFrameFromCoordinates(frameAreas, aColor)
     pushStyle()
     noFill()
     local strokeColor = aColor or color(0, 255, 0)
@@ -487,55 +481,6 @@ function drawFrameAreas(frameAreas, aColor)
     popStyle()
 end
 
-function ZoomScroller:calculateRedFrameVisibleAreas(frame)
-    -- First, get the areas of the frame that are visible on screen
-    local greenVisibleAreas = self:visibleAreas(frame)
-    local redVisibleAreas = {}
-    
-    -- Calculate the scale factor based on the frame's current size compared to the normal screen size
-    local scaleFactor = WIDTH / frame.width
-    
-    for _, area in ipairs(greenVisibleAreas) do
-        -- Translate each greenVisibleArea back into normal-sized screen coordinates
-        -- Here, we assume the visible area needs to be scaled down by the inverse of the scaleFactor
-        local redArea = {
-            left = (area.left - (WIDTH / 2)) * scaleFactor + (WIDTH / 2),
-            right = (area.right - (WIDTH / 2)) * scaleFactor + (WIDTH / 2),
-            top = (area.top - (HEIGHT / 2)) * scaleFactor + (HEIGHT / 2),
-            bottom = (area.bottom - (HEIGHT / 2)) * scaleFactor + (HEIGHT / 2),
-        }
-        
-        table.insert(redVisibleAreas, redArea)
-    end
-    
-    return redVisibleAreas
-end
-
-function ZoomScroller:placeShapesAlongTop(frame)
-    local redVisibleAreas = self:calculateRedFrameVisibleAreas(frame)
-    redFrames = #redVisibleAreas
-    pushStyle()
-    noFill()
-    strokeWidth(12)
-    stroke(196, 255, 0) -- Use red stroke to draw the rectangles
-    
-    local yOffset = HEIGHT - 20 -- Y-offset from the top of the screen
-    local xOffset = 10 -- Starting X-offset from the left of the screen
-    local spacing = 10 -- Spacing between each shape
-    
-    for _, area in ipairs(redVisibleAreas) do
-        local width = area.right - area.left
-        local height = area.top - area.bottom
-        
-        -- Draw each shape with its top edge aligned to yOffset
-        rect(xOffset, yOffset - height, width, height)
-        
-        -- Update xOffset for the next shape
-        xOffset = xOffset + width + spacing
-    end
-    
-    popStyle()
-end
 
 function ZoomScroller:getDrawingParameters1(nativePosition, nativeSize, visibleAreas)
     -- Directly adapt from Mote:draw logic to calculate drawing parameters
@@ -592,263 +537,20 @@ function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleAr
 end
 
 
-function ZoomScroller:xyFrameToScreen(x, y, frame)
-    local scaleFactor = WIDTH / frame.width
-    local effectiveStartX = (frame.x - frame.width / 2) * scaleFactor
-    local effectiveStartY = (frame.y - frame.height / 2) * scaleFactor
-    local posX = effectiveStartX + (x * scaleFactor)
-    local posY = effectiveStartY + (y * scaleFactor)
-    return posX, posY
-end
-
-function ZoomScroller:xyScreenToFrame(x, y, frame)
-    local scaleFactor = frame.width / WIDTH
-    local effectiveStartX = frame.x - frame.width / 2
-    local effectiveStartY = frame.y - frame.height / 2
-    local posX = ((x - effectiveStartX) / scaleFactor)
-    local posY = ((y - effectiveStartY) / scaleFactor)
-    return posX, posY
-end
-
-
-printedAlready = 0
--- Function to always translate frame coordinates to a fixed-size representation at the center of the screen
-function xyFrameToFixedRepresentation(frame, frameX, frameY, printDebug)
-    -- Define the fixed center position for the mini frame
-    local miniCenterX = WIDTH / 2
-    local miniCenterY = HEIGHT / 2
-    -- Define the fixed size for the mini frame
-    local miniWidth = WIDTH / 4
-    local miniHeight = HEIGHT / 4
-    
-    -- Calculate the offset from the frame's center to the given point
-    local offsetX = frameX - frame.x
-    local offsetY = frameY - frame.y
-    
-    -- Scale the offset to fit the mini frame's size
-    local scaledOffsetX = offsetX * (miniWidth / frame.width)
-    local scaledOffsetY = offsetY * (miniHeight / frame.height)
-    
-    if printDebug and printedAlready < 4 then
-        print("-----inside xyFrameToFixedRepresentation")
-        print("FrameX, FrameY: ", frameX, frameY)
-        print("OffsetX, OffsetY: ", offsetX, offsetY)
-        print("MiniFrame Position: ", miniCenterX + scaledOffsetX, miniCenterY + scaledOffsetY)
-        print("-----yeah")
-        printedAlready = printedAlready + 1
-    end
-    
-    -- Apply the scaled offset to the mini frame's center position
-    return miniCenterX + scaledOffsetX, miniCenterY + scaledOffsetY
-end
-
-
-
-function drawEllipsesAtRawAreaPoints(frame)
-    -- Draw the mini frame and get its corner points
-    local topLeft, topRight, bottomLeft, bottomRight = drawMiniFrame(frame)
-    
-    -- Get raw tiling areas defined by the frame
-    local rawAreas = zoomScroller:defineRawTilingAreas(frame)
-    
-    -- Draw ellipses at the interior points of these areas within the mini frame
-    pushStyle()
-    fill(255, 85, 0) -- Green color for ellipses
-    noStroke()
-    
-    for _, area in ipairs(rawAreas) do
-        -- Translate the raw area start points to the mini frame's fixed-size representation
-        local x, y = xyFrameToFixedRepresentation(frame, area.startX, area.startY)
-        
-        -- Draw an ellipse at each translated point
-        ellipse(x, y, 10, 10) -- Small ellipses for visualization
-    end
-    
-    popStyle()
-end
-
-printedDebugRawCornerAlready = 0
-function ZoomScroller:drawVisibleCornersOfRawAreas(rawAreas, frame, printDebug)
-    pushStyle()
-    fill(236, 216, 67)
-    for _, area in ipairs(rawAreas) do
-        -- Adjust the raw area for the frame being centered and limit to screen bounds
-        local left = area.startX - frame.width / 2
-        local right = area.startX + frame.width / 2
-        local top = area.startY + frame.height / 2
-        local bottom = area.startY - frame.height / 2
-        
-        local visibleCorner = {
-            x = nil,
-            y = nil
-        }
-        
-        -- Determine which corner(s) are partially visible and set their coordinates
-        if left >= 0 and left < WIDTH and top <= HEIGHT and top > 0 then
-            visibleCorner.x, visibleCorner.y = left, top -- Top left corner
-        elseif right <= WIDTH and right > 0 and top <= HEIGHT and top > 0 then
-            visibleCorner.x, visibleCorner.y = right, top -- Top right corner
-        elseif left >= 0 and left < WIDTH and bottom >= 0 and bottom < HEIGHT then
-            visibleCorner.x, visibleCorner.y = left, bottom -- Bottom left corner
-        elseif right <= WIDTH and right > 0 and bottom >= 0 and bottom < HEIGHT then
-            visibleCorner.x, visibleCorner.y = right, bottom -- Bottom right corner
-        end
-        if visibleCorner.x and visibleCorner.y and visibleCorner.x > WIDTH/4 then
-            if printDebug and printedDebugRawCornerAlready < 4 then
-                print("-----inside drawVisibleCornersOfRawAreas")
-                print("left, right: ", left, right)
-                print("-----yeah")
-                printedDebugRawCornerAlready = printedDebugRawCornerAlready + 1
-            end
-        end
-        -- If a visible corner was found, draw it
-        if visibleCorner.x and visibleCorner.y then
-            ellipse(visibleCorner.x, visibleCorner.y, 45) -- Draw a small ellipse at the visible corner
-        end
-    end
-    
-    popStyle()
-end
 
 
 
 
-function ZoomScroller:visibleAreas2(frame)
-    local rawAreas = {}
-    local visibleAreas = {}
-    
-    -- Step 1: Define Areas to be Drawn
-    local tilesX = math.ceil(WIDTH / frame.width) + 1
-    local tilesY = math.ceil(HEIGHT / frame.height) + 1
-    for i = -1, tilesX do
-        for j = -1, tilesY do
-            local startX = frame.x % frame.width + (i * frame.width)
-            local startY = frame.y % frame.height + (j * frame.height)
-            
-            if startX > frame.width then startX = startX - frame.width end
-            if startY > frame.height then startY = startY - frame.height end
-            
-            -- Calculate the "raw" area without adjusting for screen bounds yet
-            local area = {startX = startX, startY = startY}
-            table.insert(rawAreas, area)
-        end
-    end
-    
-    -- Step 2: Adjust for Screen Coordinates
-    for _, area in ipairs(rawAreas) do
-        -- Adjust the raw area for the frame being centered and limit to screen bounds
-        local left = area.startX - frame.width / 2
-        local right = area.startX + frame.width / 2
-        local top = area.startY + frame.height / 2
-        local bottom = area.startY - frame.height / 2
-        
-        local adjustedArea = {
-            left = math.max(left, 0),
-            right = math.min(right, WIDTH),
-            top = math.min(top, HEIGHT),
-            bottom = math.max(bottom, 0),
-        }
-        
-        -- Only add the area if it's partially visible on screen
-        if adjustedArea.left < adjustedArea.right and adjustedArea.bottom < adjustedArea.top then
-            table.insert(visibleAreas, adjustedArea)
-        end
-    end
-    
-    return visibleAreas
-end
 
-function ZoomScroller:defineRawTilingAreas(frame)
-    local rawAreas = {}
-    local tilesX = math.ceil(WIDTH / frame.width) + 1
-    local tilesY = math.ceil(HEIGHT / frame.height) + 1
-    for i = -1, tilesX do
-        for j = -1, tilesY do
-            local startX = frame.x % frame.width + (i * frame.width)
-            local startY = frame.y % frame.height + (j * frame.height)
-            
-            if startX > frame.width then startX = startX - frame.width end
-            if startY > frame.height then startY = startY - frame.height end
-            
-            -- Calculate the "raw" area without adjusting for screen bounds yet
-            local area = {startX = startX, startY = startY}
-            table.insert(rawAreas, area)
-        end
-    end
-    return rawAreas
-end
 
-function ZoomScroller:adjustRawAreasForScreen(rawAreas, frame)
-    local visibleAreas = {}
-    for _, area in ipairs(rawAreas) do
-        -- Adjust the raw area for the frame being centered and limit to screen bounds
-        local left = area.startX - frame.width / 2
-        local right = area.startX + frame.width / 2
-        local top = area.startY + frame.height / 2
-        local bottom = area.startY - frame.height / 2
-        
-        local adjustedArea = {
-            left = math.max(left, 0),
-            right = math.min(right, WIDTH),
-            top = math.min(top, HEIGHT),
-            bottom = math.max(bottom, 0),
-        }
-        
-        -- Only add the area if it's partially visible on screen
-        if adjustedArea.left < adjustedArea.right and adjustedArea.bottom < adjustedArea.top then
-            table.insert(visibleAreas, adjustedArea)
-        end
-    end
-    return visibleAreas
-end
 
-printDebugVisible3 = 0
-function ZoomScroller:visibleAreas3(frame, printDebug)
-    local rawAreas = ZoomScroller:defineRawTilingAreas(frame)
-    local visibleAreas = ZoomScroller:adjustRawAreasForScreen(rawAreas, frame)
-    for i, area in ipairs(rawAreas) do
-        if printDebug and printDebugVisible3 < 4 then
-            print("-----inside visibleAreas3")
-            print("area.startX, area.startY: ", area.startX, area.startY)
-            print("visibleAreas[i].left, visibleAreas[i].top: ", visibleAreas[i].left, visibleAreas[i].top)
-            print("-----yeah")
-            printDebugVisible3 = printDebugVisible3 + 1
-        end
-    end
-    return visibleAreas
-end
 
-printedDebugCornerAlready = 0
-function ZoomScroller:drawVisibleCornersOnMiniFrame(rawAreas, frame, printDebug)
 
-    
-    pushStyle()
-    fill(229, 0, 255) -- Red color for visibility
-    
-    for _, area in ipairs(rawAreas) do
-        -- Calculate the corner positions based on raw area start points and the frame's dimensions
-        local corners = {
-            topLeft = {x = area.startX, y = area.startY + frame.height},
-            topRight = {x = area.startX + frame.width, y = area.startY + frame.height},
-            bottomLeft = {x = area.startX, y = area.startY},
-            bottomRight = {x = area.startX + frame.width, y = area.startY}
-        }
-         
-        -- Iterate through each corner and draw it on the miniFrame if it's within the actual frame's bounds
-        for _, corner in pairs(corners) do
-            if printDebug and printedDebugCornerAlready < 4 and corner.x > WIDTH/4 then
-                print("-----inside drawVisibleCornersOnMiniFrame")
-                print("topLeft, topRight: ", topLeft, topRight)
-                print("-----yeah")
-                printedDebugCornerAlready = printedDebugCornerAlready + 1
-            end
-            if corner.x >= 0 and corner.x <= WIDTH and corner.y >= 0 and corner.y <= HEIGHT then
-                local miniX, miniY = xyFrameToFixedRepresentation(frame, corner.x, corner.y, true)
-                ellipse(miniX, miniY, 40) -- Draw a small ellipse at the corner position on the miniFrame
-            end
-        end
-    end
-    
-    popStyle()
-end
+
+
+
+
+
+
+
 
