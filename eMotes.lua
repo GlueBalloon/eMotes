@@ -1,14 +1,20 @@
-
-
-
-
-
-
 -- Mote class
 Mote = class()
 
+function Mote:randomStartEmoji()
+    local startEmojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", 
+    "🙂", "🙃", "😉", "😌", "😗", "😙", "😚", "😋", "😛", "😝", "😜", 
+    "🤪", "🤨", "🧐", "🤓", "😎", "😏", "😒", "😔", "😟", "😕", 
+    "🙁", "🥺", "😢", "😠", "🤐", "🥴",
+    "😳", "🤔", "🤭", "🤫", "🤥", "😶", "😐", 
+    "😑", "😬", "🙄", "😯", "😴", "🤤",
+    "😷", "🤒", "🤕", "🤠"}
+    return startEmojis[math.random(#startEmojis)]
+end
+
 function Mote:init(x, y)
     self.size = MOTE_SIZE
+    self.emoji = math.random() < 0.4 and self:randomStartEmoji() or "😀"
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
     self.maxSpeed = MOTE_SPEED_DEFAULT
@@ -25,6 +31,13 @@ end
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
+    if math.random() < 0.01 then
+        if self.emoji == "😀" then
+            self.emoji = self:randomStartEmoji()
+        else  
+            self.emoji = "😀"
+        end
+    end
     if self.state == "hot" then
         self.color = color(172, 100, 81) -- Hot color
     elseif self.state == "cold" then
@@ -135,7 +148,7 @@ function Mote:draw(frame)
         local textX = posX - textWidth / 2
         local textY = posY - textHeight / 2
         -- Draw the emoji centered on the mote's position
-        text("😀", posX, posY)
+        text(self.emoji, posX, posY)
     else
         -- Draw simple dot at the mote's position
         ellipse(posX, posY, adjustedSize)
@@ -180,7 +193,7 @@ function Mote:drawWithParams(x, y, size)
     if size >= transitionalSize then
         fill(255)
         fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
-        text("😀", x, y)
+        text(self.emoji, x, y)
     else
         ellipse(x, y, size)
     end

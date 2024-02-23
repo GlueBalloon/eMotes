@@ -1,10 +1,11 @@
-PRINTALITTLETIME = 1.02
+PRINTALITTLETIME = 1.2
 
-function printALittle(aString)
-    if ElapsedTime < PRINTALITTLETIME then
-        print(aString)
+function printALittle(...)
+    if ElapsedTime < PRINTALITTLETIME + 1 and ElapsedTime > 1 then
+        print(...)
     end
 end
+
 
 function testNeighborDetection()
     -- Create test motes
