@@ -123,8 +123,8 @@ function draw()
     spriteMode(CENTER)
 
     local screenRatios, frameRatios = zoomScroller:visibleWrappedOnscreenAndFrameRatios(frame)
-    zoomScroller:drawRatioAreas(screenRatios, color(58, 244, 86, 191), 16)
-    zoomScroller:drawRatioAreas(frameRatios, color(237, 77, 243, 191), 8)
+--    zoomScroller:drawRatioAreas(screenRatios, color(58, 244, 86, 191), 16)
+--    zoomScroller:drawRatioAreas(frameRatios, color(237, 77, 243, 191), 12)
    
      for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)

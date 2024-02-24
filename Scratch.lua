@@ -1,265 +1,3 @@
-
-    
-function ZoomScroller:visibleAreaRatios(frame)
-    -- Calculate the visible portion of the frame in screen coordinates
-    local fHalfWidth = frame.width / 2
-    local fHalfHeight = frame.height / 2
-    local visibleLeft = math.max(frame.x - fHalfWidth, 0)
-    local visibleRight = math.min(frame.x + fHalfWidth, WIDTH)
-    local visibleTop = math.min(frame.y + fHalfHeight, HEIGHT)
-    local visibleBottom = math.max(frame.y - fHalfHeight, 0)
-    
-    -- Calculate the visible area's width and height
-    local visibleWidth = visibleRight - visibleLeft
-    local visibleHeight = visibleTop - visibleBottom
-    
-    local ratios = {}
-    
-    -- Determine if a frame side is on screen
-    local visibleEmptyWidth = WIDTH - visibleWidth
-    local visibleEmptyHeight = HEIGHT - visibleHeight
-    local edgeOnscreenVertical = visibleEmptyWidth > 0
-    local edgeOnscreenHorizontal = visibleEmptyHeight > 0
-    
-    -- If there's a bisection, calculate the ratio for the other part of the screen
-    if (edgeOnscreenVertical and not edgeOnscreenHorizontal) or (edgeOnscreenHorizontal and not edgeOnscreenVertical) then
-        
-        -- Ratio for the visible part of the frame
-        local visibleRatio = {
-            wR = visibleWidth / frame.width,
-            hR = visibleHeight / frame.height,
-            xR = (visibleLeft - (frame.x - fHalfWidth)) / frame.width,
-            yR = (visibleBottom - (frame.y - fHalfHeight)) / frame.height,
-        }
-        
-        local otherWidth = edgeOnscreenVertical and visibleEmptyWidth or visibleWidth
-        local otherHeight = edgeOnscreenHorizontal and visibleEmptyHeight or visibleHeight
-        local otherX, otherY
-        
-        if edgeOnscreenVertical then
-            otherX = (visibleRight < WIDTH) and frame.x - fHalfWidth or frame.x - otherWidth + fHalfWidth  -- Opposite side of the visible area
-            otherY = visibleBottom  -- Same vertical position as the visible area
-        else -- bisectedH
-            otherY = (visibleTop < HEIGHT) and frame.y - fHalfHeight or frame.y - otherHeight + fHalfHeight  -- Opposite side of the visible area
-            otherX = visibleLeft  -- Same horizontal position as the visible area
-        end
-        
-        -- Adjust otherX and otherY to be relative to the frame's position
-        local relativeX = otherX - (frame.x - fHalfWidth)
-        local relativeY = otherY - (frame.y - fHalfHeight)
-        
-        local otherRatio = {
-            wR = otherWidth / frame.width,
-            hR = otherHeight / frame.height,
-            xR = relativeX / frame.width,
-            yR = relativeY / frame.height,
-        }
-        
-        ratios = { visibleRatio, otherRatio }
-
-    -- Handle corner visibility: when neither full bisection nor full visibility occurs
-    elseif not (visibleWidth == WIDTH or visibleHeight == HEIGHT) then
-        -- Calculate positions of the four corners of the frame
-        local topLeftF = {x = frame.x - fHalfWidth, y = frame.y + fHalfHeight}
-        local topRightF = {x = frame.x + fHalfWidth, y = frame.y + fHalfHeight}
-        local bottomLeftF = {x = frame.x - fHalfWidth, y = frame.y - fHalfHeight}
-        local bottomRightF = {x = frame.x + fHalfWidth, y = frame.y - fHalfHeight}
-
-        local otherWidth = WIDTH - visibleWidth
-        local otherHeight = HEIGHT - visibleHeight
-        
-        visibleCorner = nil
-        
-        local topHeightsF, bottomHeightsF, leftWidthsF, rightWidthsF
-        if (topLeftF.x >= 0 and topLeftF.x <= WIDTH and topLeftF.y >= 0 and topLeftF.y <= HEIGHT) then--top left
-            visibleCorner = "visibleBottomRight"
-            topHeightsF, leftWidthsF = visibleHeight, visibleWidth 
-            bottomHeightsF, rightWidthsF = otherHeight, otherWidth    
-        elseif (topRightF.x >= 0 and topRightF.x <= WIDTH and topRightF.y >= 0 and topRightF.y <= HEIGHT) then --top right 
-            visibleCorner = "visibleBottomLeft"
-            topHeightsF, rightWidthsF = visibleHeight, visibleWidth  
-            bottomHeightsF, leftWidthsF = otherHeight, otherWidth        
-        elseif (bottomLeftF.x >= 0 and bottomLeftF.x <= WIDTH and bottomLeftF.y >= 0 and bottomLeftF.y <= HEIGHT) then --bottom left
-            visibleCorner = "visibleTopRight"
-            topHeightsF, rightWidthsF = otherHeight, otherWidth    
-            bottomHeightsF, leftWidthsF = visibleHeight, visibleWidth      
-        elseif (bottomRightF.x >= 0 and bottomRightF.x <= WIDTH and bottomRightF.y >= 0 and bottomRightF.y <= HEIGHT) then --bottom right
-            visibleCorner = "visibleTopLeft"
-            topHeightsF, leftWidthsF = otherHeight, otherWidth 
-            bottomHeightsF, rightWidthsF = visibleHeight, visibleWidth        
-        else
-            visibleCorner = "not found"
-            return ratios
-        end
-            
-        -- Opposite corner area ratio (other area)
-        local frameBottomLeftRatio = {
-            wR = leftWidthsF / frame.width,
-            hR = bottomHeightsF / frame.height,
-            xR = 0,
-            yR = 0 
-        }
-        local frameBottomRightRatio = {
-            wR = rightWidthsF / frame.width,
-            hR = bottomHeightsF / frame.height,
-            xR = (frame.width - rightWidthsF) / frame.width,
-            yR = 0 
-        }
-        local frameTopRightRatio = {
-            wR = rightWidthsF / frame.width,
-            hR = topHeightsF / frame.height,
-            xR = (frame.width - rightWidthsF) / frame.width,
-            yR = (frame.height - topHeightsF) / frame.height
-        }
-        local frameTopLeftRatio = {
-            wR = leftWidthsF / frame.width,
-            hR = topHeightsF / frame.height,
-            xR = 0,
-            yR = (frame.height - topHeightsF) / frame.height
-        }
-        table.insert(ratios, frameBottomLeftRatio)
-        table.insert(ratios, frameBottomRightRatio)
-        table.insert(ratios, frameTopRightRatio)
-        table.insert(ratios, frameTopLeftRatio)
-    else
-        --visible area is fully inside screen bounds
-        -- Ratio for the visible part of the frame
-        local visibleRatio = {
-            wR = visibleWidth / frame.width,
-            hR = visibleHeight / frame.height,
-            xR = (visibleLeft - (frame.x - fHalfWidth)) / frame.width,
-            yR = (visibleBottom - (frame.y - fHalfHeight)) / frame.height,
-        }
-        
-        ratios = { visibleRatio }
-    end
-    ratioTableCount = #ratios
-    -- Return the array of ratio tables
-    return ratios
-end
-
-
-
-
-function drawRatioTablesToScreen(ratioTables, aColor)
-    pushStyle()
-    noFill()
-    stroke(aColor or color(255, 0, 0)) -- Red color for visibility
-    strokeWidth(40)
-    
-    for _, ratio in ipairs(ratioTables) do
-        -- Calculate the rectangle's position and size based on the screen dimensions and the ratio table
-        local rectX = WIDTH * ratio.xR
-        local rectY = HEIGHT * ratio.yR
-        local rectWidth = WIDTH * ratio.wR
-        local rectHeight = HEIGHT * ratio.hR
-        
-        -- Draw the rectangle
-        rect(rectX, rectY, rectWidth, rectHeight)
-    end
-    
-    popStyle()
-end
-
-
-
-function ZoomScroller:visibleAreaRatio(frame)
-    -- Calculate the visible portion of the frame in screen coordinates
-    local visibleLeft = math.max(frame.x - frame.width / 2, 0)
-    local visibleRight = math.min(frame.x + frame.width / 2, WIDTH)
-    local visibleTop = math.min(frame.y + frame.height / 2, HEIGHT)
-    local visibleBottom = math.max(frame.y - frame.height / 2, 0)
-    
-    -- Calculate the visible area's width and height
-    local visibleWidth = visibleRight - visibleLeft
-    local visibleHeight = visibleTop - visibleBottom
-    
-    -- Determine the ratio of the visible area to the frame's total area
-    local ratio = {
-        wR = visibleWidth / frame.width,
-        hR = visibleHeight / frame.height,
-        xR = (visibleLeft - (frame.x - frame.width / 2)) / frame.width,
-        yR = (visibleBottom - (frame.y - frame.height / 2)) / frame.height,
-    }
-    
-    -- Return the ratio table for the visible area
-    return ratio
-end
-
-function drawRatioTableToScreen(ratioTable, aColor, lineWidth)
-    pushStyle() -- Save the current drawing style settings
-    noFill() -- No fill for the rectangle
-    stroke(aColor or color(255, 0, 0) ) -- Red stroke color for visibility
-    strokeWidth(lineWidth or 25) -- Set the stroke width
-    
-    -- Calculate the rectangle's position and size based on the screen dimensions and the ratio table
-    local rectX = WIDTH * ratioTable.xR
-    local rectY = HEIGHT * ratioTable.yR
-    local rectWidth = WIDTH * ratioTable.wR
-    local rectHeight = HEIGHT * ratioTable.hR
-    
-    -- Draw the rectangle
-    rect(rectX, rectY, rectWidth, rectHeight)
-    
-    popStyle() -- Restore the previous drawing style settings
-end
-
-
-    
-function ZoomScroller:visibleAreas(frame)
-    local visibleAreas = {}
-    -- Assume the frame can be fully contained within the screen for simplification.
-    local tilesX = math.ceil(WIDTH / frame.width) + 1
-    local tilesY = math.ceil(HEIGHT / frame.height) + 1
-    
-    for i = -1, tilesX do
-        for j = -1, tilesY do
-            -- Calculate the starting points for tiling
-            local startX = frame.x % frame.width + (i * frame.width)
-            local startY = frame.y % frame.height + (j * frame.height)
-            
-            if startX > frame.width then startX = startX - frame.width end
-            if startY > frame.height then startY = startY - frame.height end
-            
-            -- Adjust for the frame being centered
-            local left = startX - frame.width / 2
-            local right = startX + frame.width / 2
-            local top = startY + frame.height / 2
-            local bottom = startY - frame.height / 2
-            
-            -- Limit the areas to the screen bounds
-            local visibleArea = {
-                left = math.max(left, 0),
-                right = math.min(right, WIDTH),
-                top = math.min(top, HEIGHT),
-                bottom = math.max(bottom, 0),
-            }
-            
-            -- Only add the area if it's partially visible on screen
-            if visibleArea.left < visibleArea.right and visibleArea.bottom < visibleArea.top then
-                table.insert(visibleAreas, visibleArea)
-            end
-        end
-    end
-    greenFrames = #visibleAreas
-    return visibleAreas
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, frameAreaRatios, screenAreaRatios)
     for index, frameRatio in ipairs(frameAreaRatios) do
         -- Calculate the relative position of the mote within the frame area using the new ratio format
@@ -293,21 +31,334 @@ function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, frameArea
     return nil
 end
 
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    for _, screenArea in ipairs(visibleScreenAreas) do
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        -- Check if the mote's native position is within this screen area
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            -- The mote is within a visible screen area, so return its original coordinates and size
+            return {
+                x = nativePosition.x,
+                y = nativePosition.y,
+                size = nativeSize
+            }
+        end
+    end
+    
+    -- The mote is not within any visible screen area, so return nil
+    return nil
+end
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    -- Calculate the zoom ratio as the ratio of the width of the screen area to the width of the original frame area.
+    -- This correctly represents the zoom level based on how much of the original frame's width is visible.
+    local zoomRatio = self.frame.width / WIDTH
+    
+   for index, screenArea in ipairs(visibleScreenAreas) do
+        local frameRatio = visibleFrameRatios[index] -- Get the corresponding frame ratio for this screen area.
+        
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        -- Check if the mote's native position is within this screen area
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            
+            -- Adjust mote's position and size based on the calculated zoom ratio.
+            local adjustedPosX = (nativePosition.x - screenAreaLeft) * zoomRatio + screenAreaLeft
+            local adjustedPosY = (nativePosition.y - screenAreaBottom) * zoomRatio + screenAreaBottom
+            local adjustedSize = nativeSize * zoomRatio
+            
+            return {
+                x = adjustedPosX,
+                y = adjustedPosY,
+                size = adjustedSize
+            }
+        end
+    end
+    
+    -- The mote is not within any visible screen area, so return nil
+    return nil
+end
+
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    local zoomRatio = self.frame.width / WIDTH
+    
+    -- Determine the center of the zoom area (assuming the entire screen for simplicity)
+    local centerX = WIDTH / 2
+    local centerY = HEIGHT / 2
+    
+    for index, screenArea in ipairs(visibleScreenAreas) do
+        local frameRatio = visibleFrameRatios[index]
+        
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            
+            -- Calculate the mote's position relative to the center of the zoom area
+            local relativePosX = nativePosition.x - centerX
+            local relativePosY = nativePosition.y - centerY
+        
+            -- Apply the zoom ratio to the relative position
+            local adjustedPosX = relativePosX * zoomRatio + centerX
+            local adjustedPosY = relativePosY * zoomRatio + centerY
+            
+            -- Adjust the mote's size based on the zoom ratio
+            local adjustedSize = nativeSize * zoomRatio
+            
+            return {
+                x = adjustedPosX,
+                y = adjustedPosY,
+                size = adjustedSize
+            }
+        end
+    end
+    
+    return nil
+end
+
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    for _, screenArea in ipairs(visibleScreenAreas) do
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        -- Check if the mote's native position is within this screen area
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            -- The mote is within a visible screen area, so return its original coordinates and size
+            return {
+                x = nativePosition.x,
+                y = nativePosition.y,
+                size = nativeSize
+            }
+        end
+    end
+    
+    -- The mote is not within any visible screen area, so return nil
+    return nil
+end
+-- Assuming ElapsedTime is accessible within this scope and that lastDrawTime is a persistent variable defined outside of this function
+local lastDrawTime = 0
+local drawInterval = 0.1  -- seconds between draws
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    local shouldDraw = false
+    if ElapsedTime - lastDrawTime > drawInterval then
+        shouldDraw = true
+        lastDrawTime = ElapsedTime  -- Update last draw time here
+    end
+    
+    for index, screenArea in ipairs(visibleScreenAreas) do
+        local frameRatio = visibleFrameRatios[index]
+        
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        -- If it's time to draw, calculate and draw the bounds and centers
+        if shouldDraw then
+            -- Drawing bounds and centers
+            strokeWidth(8)
+            -- Draw the bounds of the screen area
+            stroke(255, 0, 0) -- Red for screen area bounds
+            noFill()
+            rect(screenAreaLeft, screenAreaBottom, screenAreaWidth, screenAreaHeight)
+            
+            -- Draw the bounds of the frame area
+            stroke(0, 255, 0) -- Green for frame area bounds
+            local frameLeft = frameRatio.xR * WIDTH
+            local frameBottom = (1 - frameRatio.yR - frameRatio.hR) * HEIGHT
+            local frameWidth = frameRatio.wR * WIDTH
+            local frameHeight = frameRatio.hR * HEIGHT
+            rect(frameLeft, frameBottom, frameWidth, frameHeight)
+            
+            strokeWidth(0)
+            -- Draw ellipses at the center points
+            fill(255, 226, 0) -- Yellow for the center of the screen area
+            ellipse(screenAreaLeft + screenAreaWidth / 2, screenAreaBottom + screenAreaHeight / 2, 10)
+            fill(0, 255, 217) -- Blue for the center of the frame area
+            ellipse(frameLeft + frameWidth / 2, frameBottom + frameHeight / 2, 10)
+        end
+        
+        -- Checking if the mote's native position is within this screen area
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            -- The mote is within a visible screen area, so return its original coordinates and size
+            return {
+                x = nativePosition.x,
+                y = nativePosition.y,
+                size = nativeSize
+            }
+        end
+    end
+    
+    -- The mote is not within any visible screen area, so return nil
+    return nil
+end
+
+local lastDrawTime = 0
+local drawInterval = 0.1  -- seconds between draws
+
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    local shouldDraw = false
+    if ElapsedTime - lastDrawTime > drawInterval then
+        shouldDraw = true
+        lastDrawTime = ElapsedTime  -- Update last draw time here
+    end
+    
+    for index, screenArea in ipairs(visibleScreenAreas) do
+        local frameRatio = visibleFrameRatios[index]
+        
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        local frameLeft = frameRatio.xR * WIDTH
+        local frameBottom = (1 - frameRatio.yR - frameRatio.hR) * HEIGHT
+        local frameWidth = frameRatio.wR * WIDTH
+        local frameHeight = frameRatio.hR * HEIGHT
+        
+        -- If it's time to draw, calculate and draw the bounds, centers, and line between centers
+        if shouldDraw then
+            strokeWidth(8)
+            -- Draw the bounds of the screen area
+            stroke(255, 0, 0) -- Red for screen area bounds
+            noFill()
+            rect(screenAreaLeft, screenAreaBottom, screenAreaWidth, screenAreaHeight)
+            
+            -- Draw the bounds of the frame area
+            stroke(0, 255, 0) -- Green for frame area bounds
+            rect(frameLeft, frameBottom, frameWidth, frameHeight)
+            
+            
+            strokeWidth(0)
+            -- Draw ellipses at the center points
+            fill(255, 226, 0) -- Yellow for the center of the screen area
+            local screenAreaCenterX = screenAreaLeft + screenAreaWidth / 2
+            local screenAreaCenterY = screenAreaBottom + screenAreaHeight / 2
+            ellipse(screenAreaCenterX, screenAreaCenterY, 10)
+            
+            fill(0, 255, 217) -- Blue for the center of the frame area
+            local frameCenterX = frameLeft + frameWidth / 2
+            local frameCenterY = frameBottom + frameHeight / 2
+            ellipse(frameCenterX, frameCenterY, 10)
+            
+            -- Draw a line between the centers
+            stroke(255, 141) -- White for the line
+            strokeWidth(12)
+            line(screenAreaCenterX, screenAreaCenterY, frameCenterX, frameCenterY)
+        end
+        
+        -- Checking if the mote's native position is within this screen area
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            return {
+                x = nativePosition.x,
+                y = nativePosition.y,
+                size = nativeSize
+            }
+        end
+    end
+    
+    return nil
+end
 
 
 
+local lastDrawTime = 0
+local drawInterval = 0.1  -- seconds between draws
 
-
-
-
-
-
-
-
-
-
-
-
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
+    local shouldDraw = false
+    if ElapsedTime - lastDrawTime > drawInterval then
+        shouldDraw = true
+        lastDrawTime = ElapsedTime
+    end
+    
+    for index, screenArea in ipairs(visibleScreenAreas) do
+        local frameRatio = visibleFrameRatios[index]
+        
+        local screenAreaWidth = screenArea.wR * WIDTH
+        local screenAreaHeight = screenArea.hR * HEIGHT
+        local screenAreaLeft = screenArea.xR * WIDTH
+        local screenAreaBottom = HEIGHT - screenArea.yR * HEIGHT - screenAreaHeight
+        
+        local frameLeft = frameRatio.xR * WIDTH
+        local frameBottom = (1 - frameRatio.yR - frameRatio.hR) * HEIGHT
+        local frameWidth = frameRatio.wR * WIDTH
+        local frameHeight = frameRatio.hR * HEIGHT
+        
+        -- Calculate the displacement vector
+        local displacementX = (frameLeft + frameWidth / 2) - (screenAreaLeft + screenAreaWidth / 2)
+        local displacementY = (frameBottom + frameHeight / 2) - (screenAreaBottom + screenAreaHeight / 2)
+        
+        -- Apply the displacement to the mote's position
+        local adjustedPosX = nativePosition.x + displacementX
+        local adjustedPosY = nativePosition.y + displacementY
+        
+        -- Draw bounds, centers, and line between centers if it's time
+        if shouldDraw then
+            strokeWidth(6)
+            -- Draw the bounds of the screen area
+            stroke(255, 0, 0) -- Red for screen area bounds
+            noFill()
+     --       rect(screenAreaLeft, screenAreaBottom, screenAreaWidth, screenAreaHeight)
+            
+            -- Draw the bounds of the frame area
+            stroke(0, 255, 0) -- Green for frame area bounds
+            rect(frameLeft, frameBottom, frameWidth, frameHeight)
+            
+            
+            strokeWidth(0)
+            -- Draw ellipses at the center points
+            fill(255, 226, 0, 145) -- Yellow for the center of the screen area
+            local screenAreaCenterX = screenAreaLeft + screenAreaWidth / 2
+            local screenAreaCenterY = screenAreaBottom + screenAreaHeight / 2
+            ellipse(screenAreaCenterX, screenAreaCenterY, 25)
+            
+            fill(0, 255, 217, 143) -- Blue for the center of the frame area
+            local frameCenterX = frameLeft + frameWidth / 2
+            local frameCenterY = frameBottom + frameHeight / 2
+            ellipse(frameCenterX, frameCenterY, 25)
+            
+            -- Draw a line between the centers
+            stroke(255, 141) -- White for the line
+            strokeWidth(12)
+            line(screenAreaCenterX, screenAreaCenterY, frameCenterX, frameCenterY)
+        end
+        
+        -- Check if the mote's native position is within this screen area before adjustment
+        -- This check is crucial as it determines if the mote should be considered for displacement
+        if nativePosition.x >= screenAreaLeft and nativePosition.x <= (screenAreaLeft + screenAreaWidth) and
+        nativePosition.y >= screenAreaBottom and nativePosition.y <= (screenAreaBottom + screenAreaHeight) then
+            -- Return the adjusted position of the mote
+            return {
+                x = adjustedPosX,  -- Mote's new X position after displacement
+                y = adjustedPosY,  -- Mote's new Y position after displacement
+                size = nativeSize  -- Size remains unchanged
+            }
+        end
+    end
+    
+    return nil  -- If the mote doesn't fall within any visible screen area
+end
 
 
 
