@@ -191,6 +191,7 @@ function touched(touch)
         ]]
     elseif touch.state == ENDED or touch.state == CANCELLED then 
         zoomScroller.isZooming = false
+        zoomScroller.isDragging = false
     end
 end
 

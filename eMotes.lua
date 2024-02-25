@@ -15,6 +15,7 @@ end
 function Mote:init(x, y)
     self.size = MOTE_SIZE
     self.emoji = math.random() < 0.4 and self:randomStartEmoji() or "😀"
+    self.defaultEmoji = self.emoji
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
     self.maxSpeed = MOTE_SPEED_DEFAULT + (math.random() * 0.05)
@@ -44,10 +45,13 @@ function Mote:updateAppearance()
     end
     ]]
     if self.state == "hot" then
-        self.color = color(172, 100, 81) -- Hot color
+        self.emoji = "🥵"
+        self.color = color(229, 143, 46) -- Hot color
     elseif self.state == "cold" then
-        self.color = color(82, 111, 117) -- Cold color
+        self.emoji = "🥶"
+        self.color = color(90, 183, 224) -- Cold color
     else
+        self.emoji = self.defaultEmoji
         self.color = self.defaultColor -- Normal color
     end
 end
@@ -126,6 +130,7 @@ function Mote:update()
     self:applyCatalytes()
     self:updateAppearance()
 end
+--[[
 
 function Mote:draw(frame)
     pushStyle()
@@ -146,7 +151,9 @@ function Mote:draw(frame)
     local transitionalSize = 8 -- your defined value or logic here
     
     if adjustedSize >= transitionalSize then
-        fill(255)--to remove tint from emoji
+        if self.color == self.defaultColor then
+            fill(255)--to remove tint from emoji normally
+        end
         local textRatio = adjustedSize / self.size
         fontSize(BASE_EMOJI_SIZE * textRatio)
         local textWidth, textHeight = textSize("😀")
@@ -161,6 +168,7 @@ function Mote:draw(frame)
     
     popStyle()
 end
+]]
 
 function Mote:isVisibleInSingle(frame, visibleAreas)
     if not visibleAreas then return false end -- Handle case of no visible area
@@ -196,7 +204,9 @@ function Mote:drawWithParams(x, y, size)
     local transitionalSize = 8 -- your defined value or logic here
     -- Use the provided x, y, and size to draw
     if size >= transitionalSize then
-        fill(255)
+        if self.color ~= self.defaultColor then
+          --  fill(255)--to remove tint from altered-color emoji
+        end
         fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
         text(self.emoji, x, y)
     else
@@ -233,7 +243,8 @@ Sun = class(Catalyte)
 
 function Sun:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)
-    self.color = color(255, 121, 0)  -- Warm color for the su
+    self.color = color(255, 157, 0)  -- Warm color for the sun
+    self.emoji = "🌞"
 end
 
 -- Sun class
@@ -262,6 +273,7 @@ Snowflake = class(Catalyte)
 function Snowflake:init(x, y, effectRadius)
     Catalyte.init(self, x, y, effectRadius)
     self.color = color(59, 238, 231)  -- Cold color for the snowflake
+    self.emoji = "❄️"
 end
 
 -- Snowflake class

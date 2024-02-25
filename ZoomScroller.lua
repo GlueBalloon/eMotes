@@ -81,11 +81,6 @@ function ZoomScroller:zoomCallback(event)
         
         self.frame.lastMidpoint = currentMidpoint
     end
-    if touch1.state == ENDED or touch1.state == CANCELLED or 
-        touch2.state == ENDED or touch2.state == CANCELLED then
-        print("zoom stopped")
-        self.isZooming = false
-    end
 end
 
 function ZoomScroller:dragCallback(event)
@@ -95,8 +90,9 @@ function ZoomScroller:dragCallback(event)
     local touch = event.touch -- Assuming single-finger touch
     
     if touch.state == BEGAN then
+        self.isDragging = true
         self.frame.lastTouchPoint = vec2(touch.x, touch.y)
-    elseif touch.state == MOVING and self.frame.lastTouchPoint then
+    elseif self.isDragging and touch.state == MOVING and self.frame.lastTouchPoint then
         local touchChange = vec2(touch.x, touch.y) - self.frame.lastTouchPoint
         
         -- Adjust the frame's position based on the drag
