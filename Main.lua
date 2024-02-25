@@ -1,8 +1,8 @@
-MOTE_SIZE = 2.5
+MOTE_SIZE = 3
 MOTE_COUNT = 3000
 TIMESCALE = 1
 WIND_ANGLE = 0
-MOTE_SPEED_DEFAULT = 0.25
+MOTE_SPEED_DEFAULT = 0.1
 BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
 ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
 -- Global variables
@@ -82,6 +82,7 @@ function setup()
     parameter.watch("motesNotDrawn")
     parameter.watch("greenFrames")
     
+
     shouldTest = false
     if shouldTest then
         testNumVisibleAreas()
@@ -122,15 +123,30 @@ function draw()
     background(40, 40, 50)
     spriteMode(CENTER)
 
-    local screenRatios, frameRatios = zoomScroller:visibleWrappedOnscreenAndFrameRatios(frame)
+--    local frameRatios, screenRatios = zoomScroller:visibleWrappedOnscreenAndFrameRatios2(frame)
+    --return visibleOnscreenRatios, frameRatios
+    
 --    zoomScroller:drawRatioAreas(screenRatios, color(58, 244, 86, 191), 16)
---    zoomScroller:drawRatioAreas(frameRatios, color(237, 77, 243, 191), 12)
-   
+--    zoomScroller:drawRatioAreas(frameRatios, color(237, 77, 243, 191), 12) 
+    
+--    local allBounds = zoomScroller:calculateAllBounds(frameRatios, screenRatios)
+    --function ZoomScroller:calculateAllBounds(visibleFrameRatios, visibleScreenAreas)
+    
+    if false and ElapsedTime > 3 and not testDidDone then
+        zoomScroller:testAllBoundsEquality(frame)
+        testDidDone = true
+    end
+    
+    local allBounds = zoomScroller:frameToAllBounds(frame)
+    
+    local mapping = zoomScroller:frameToViewMapping(frame)
      for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        local drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size, screenRatios, frameRatios)
+   --     local drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size, screenRatios, frameRatios)
+  --      local drawingParams = zoomScroller:getDrawingParameters2(mote.position, mote.size, allBounds)
+        local drawingParams = zoomScroller:getDrawingParameters3(mote.position, mote.size, mapping)
         if drawingParams then
             mote:drawWithParams(drawingParams.x, drawingParams.y, drawingParams.size)
             motesDrawn = motesDrawn + 1

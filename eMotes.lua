@@ -17,7 +17,7 @@ function Mote:init(x, y)
     self.emoji = math.random() < 0.4 and self:randomStartEmoji() or "😀"
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
-    self.maxSpeed = MOTE_SPEED_DEFAULT
+    self.maxSpeed = MOTE_SPEED_DEFAULT + (math.random() * 0.05)
     self.noiseOffset = math.random() * 1000
     self.perceptionRadius = 6 -- Adjust as needed
     self.maxForce = math.random() * 2 -- Adjust as needed
