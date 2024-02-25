@@ -92,9 +92,6 @@ function setup()
         testNeighborDetection()
         testWrappedNeighbors()
     end
-    
-   -- testComparisonOfCombinedAndOriginalFunction()
-  --  testConvertVisibleAreaToScreenRatio()
 end
 
 function updateWindDirection()
@@ -125,30 +122,12 @@ function draw()
     pushStyle()
     background(40, 40, 50)
     spriteMode(CENTER)
-
---    local frameRatios, screenRatios = zoomScroller:visibleWrappedOnscreenAndFrameRatios2(frame)
-    --return visibleOnscreenRatios, frameRatios
-    
---    zoomScroller:drawRatioAreas(screenRatios, color(58, 244, 86, 191), 16)
---    zoomScroller:drawRatioAreas(frameRatios, color(237, 77, 243, 191), 12) 
-    
---    local allBounds = zoomScroller:calculateAllBounds(frameRatios, screenRatios)
-    --function ZoomScroller:calculateAllBounds(visibleFrameRatios, visibleScreenAreas)
-    
-    if false and ElapsedTime > 3 and not testDidDone then
-        zoomScroller:testAllBoundsEquality(frame)
-        testDidDone = true
-    end
-    
-   -- local allBounds = zoomScroller:frameToAllBounds(frame)
     
     local mapping = zoomScroller:frameToViewMapping(frame)
-     for i, mote in ipairs(motes) do
+    for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-   --     local drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size, screenRatios, frameRatios)
-  --      local drawingParams = zoomScroller:getDrawingParameters2(mote.position, mote.size, allBounds)
         local drawingParams = zoomScroller:getDrawingParameters3(mote.position, mote.size, mapping)
         if drawingParams then
             mote:drawWithParams(drawingParams.x, drawingParams.y, drawingParams.size)
@@ -182,14 +161,7 @@ end
 
 function touched(touch)
     sensor:touched(touch)
-    --if sensor:touched(touch) then return true end
-    if touch.state == BEGAN or touch.state == MOVING then
-        --[[
-        local newMote = Mote(touch.x, touch.y)
-        newMote.isTouchBorn = true
-        table.insert(motes, 1, newMote)
-        ]]
-    elseif touch.state == ENDED or touch.state == CANCELLED then 
+    if touch.state == ENDED or touch.state == CANCELLED then 
         zoomScroller.isZooming = false
         zoomScroller.isDragging = false
     end

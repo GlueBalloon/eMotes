@@ -130,45 +130,6 @@ function Mote:update()
     self:applyCatalytes()
     self:updateAppearance()
 end
---[[
-
-function Mote:draw(frame)
-    pushStyle()
-    fill(self.color)
-    noStroke()
-    spriteMode(CENTER)
-    -- Calculate the effective startX and startY based on the frame being centered
-    -- and the fact that 0,0 is at the lower left in Codea coordinates.
-    local effectiveStartX = (frame.x - frame.width / 2)
-    local effectiveStartY = (frame.y - frame.height / 2)
-    
-    -- Adjust mote's position considering the frame's center and the increase direction of coordinates.
-    -- Here, posX and posY calculate positions from the bottom-left corner, considering the frame's adjustments.
-    local posX = effectiveStartX + (self.position.x * (frame.width / WIDTH))
-    local posY = effectiveStartY + (self.position.y * (frame.height / HEIGHT))
-    
-    local adjustedSize = self.size * (frame.width / WIDTH)
-    local transitionalSize = 8 -- your defined value or logic here
-    
-    if adjustedSize >= transitionalSize then
-        if self.color == self.defaultColor then
-            fill(255)--to remove tint from emoji normally
-        end
-        local textRatio = adjustedSize / self.size
-        fontSize(BASE_EMOJI_SIZE * textRatio)
-        local textWidth, textHeight = textSize("😀")
-        local textX = posX - textWidth / 2
-        local textY = posY - textHeight / 2
-        -- Draw the emoji centered on the mote's position
-        text(self.emoji, posX, posY)
-    else
-        -- Draw simple dot at the mote's position
-        ellipse(posX, posY, adjustedSize)
-    end
-    
-    popStyle()
-end
-]]
 
 function Mote:isVisibleInSingle(frame, visibleAreas)
     if not visibleAreas then return false end -- Handle case of no visible area
