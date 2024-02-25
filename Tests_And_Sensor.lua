@@ -206,7 +206,7 @@ function Sensor.dropUpdate(event,self,t)
     end
 end
 
--- touched gesture (this is like COUDEA touched function)
+-- touched gesture (this is like CODEA touched function)
 function Sensor:onTouched(callback)
     self:register("onTouched", self.touchedUpdate, callback)
 end

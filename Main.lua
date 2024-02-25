@@ -140,7 +140,7 @@ function draw()
         testDidDone = true
     end
     
-    local allBounds = zoomScroller:frameToAllBounds(frame)
+   -- local allBounds = zoomScroller:frameToAllBounds(frame)
     
     local mapping = zoomScroller:frameToViewMapping(frame)
      for i, mote in ipairs(motes) do

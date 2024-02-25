@@ -1,3 +1,4 @@
+--[[
 function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, frameAreaRatios, screenAreaRatios)
     for index, frameRatio in ipairs(frameAreaRatios) do
         -- Calculate the relative position of the mote within the frame area using the new ratio format
@@ -404,6 +405,7 @@ function calculateScreenAreaBounds(screenArea)
         bottom = HEIGHT - screenArea.yR * HEIGHT - (screenArea.hR * HEIGHT)
     }
 end
+
 function ZoomScroller:getDrawingParameters(nativePosition, nativeSize, visibleFrameRatios, visibleScreenAreas)
     for index, screenArea in ipairs(visibleScreenAreas) do
         local screenBounds = calculateScreenAreaBounds(screenArea)
@@ -620,6 +622,7 @@ function ZoomScroller:visibleWrappedOnscreenAndFrameRatios2(frame)
     -- Return the corrected sets of ratios
     return correctedScreenRatios, correctedFrameRatios
 end
+
 function ZoomScroller:frameToAllBounds(frame)
     
     -- Calculate the number of tiles needed to cover the screen based on the frame's dimensions.
@@ -845,3 +848,4 @@ function ZoomScroller:frameToAllBounds(frame)
     
     return allBounds
 end
+]]

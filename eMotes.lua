@@ -215,13 +215,15 @@ end
 
 
 
+
+
 -- Catalyte class
 Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
     Mote.init(self, x, y)  -- Adjust effect radius as needed
     self.size = MOTE_SIZE * 1.25
-    self.effectRadius = effectRadius or MOTE_SIZE * 4.5
+    self.effectRadius = effectRadius or MOTE_SIZE * 6.5
 end
 
 function Catalyte:registerWith(neighbors)

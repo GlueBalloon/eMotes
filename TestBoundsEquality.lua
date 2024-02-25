@@ -1,4 +1,4 @@
-function ZoomScroller:testAllBoundsEquality(frame)
+--[[ function ZoomScroller:testAllBoundsEquality(frame)
     -- Generate allBounds using the original two-step approach
     local visibleFrameRatios, visibleScreenAreas = self:visibleWrappedOnscreenAndFrameRatios2(frame)
     local allBoundsOriginal = self:calculateAllBounds(visibleFrameRatios, visibleScreenAreas)
@@ -77,4 +77,4 @@ end
 function ZoomScroller:boundsAreEqual(bounds1, bounds2)
     return bounds1.left == bounds2.left and bounds1.width == bounds2.width and
     bounds1.bottom == bounds2.bottom and bounds1.height == bounds2.height
-end
+end]]

@@ -1,4 +1,4 @@
-function ZoomScroller:frameToViewMapping(frame)
+--[[function ZoomScroller:frameToViewMapping(frame)
     local tilesX, tilesY = math.ceil(WIDTH / frame.width), math.ceil(HEIGHT / frame.height)
     local allMappings = {}
     
@@ -85,4 +85,4 @@ function ZoomScroller:getDrawingParameters3(nativePosition, nativeSize, allMappi
     
     -- Return nil if the mote isn't within any visible zoomed section
     return nil
-end
+end]]
