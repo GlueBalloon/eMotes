@@ -31,6 +31,10 @@ end
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
+    --[[
+    --code commented out but left in as a reminder:
+    --randomly removing special-case emoji feels
+    --disappointing to a viewer
     if math.random() < 0.01 then
         if self.emoji == "😀" then
             self.emoji = self:randomStartEmoji()
@@ -38,6 +42,7 @@ function Mote:updateAppearance()
             self.emoji = "😀"
         end
     end
+    ]]
     if self.state == "hot" then
         self.color = color(172, 100, 81) -- Hot color
     elseif self.state == "cold" then

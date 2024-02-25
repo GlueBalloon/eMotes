@@ -61,6 +61,9 @@ function setup()
     sensor:onZoom(function(event) 
         zoomScroller:zoomCallback(event)
     end)
+    sensor:onDrag(function(event) 
+        zoomScroller:dragCallback(event)
+    end)
     
     calculateTextSize()
     
@@ -178,11 +181,16 @@ function updateGrid(mote, grid)
 end
 
 function touched(touch)
-    if sensor:touched(touch) then return true end
+    sensor:touched(touch)
+    --if sensor:touched(touch) then return true end
     if touch.state == BEGAN or touch.state == MOVING then
+        --[[
         local newMote = Mote(touch.x, touch.y)
         newMote.isTouchBorn = true
         table.insert(motes, 1, newMote)
+        ]]
+    elseif touch.state == ENDED or touch.state == CANCELLED then 
+        zoomScroller.isZooming = false
     end
 end
 
