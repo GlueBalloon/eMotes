@@ -204,9 +204,7 @@ function Mote:drawWithParams(x, y, size)
     local transitionalSize = 8 -- your defined value or logic here
     -- Use the provided x, y, and size to draw
     if size >= transitionalSize then
-        if self.color ~= self.defaultColor then
-          --  fill(255)--to remove tint from altered-color emoji
-        end
+        fill(255)
         fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
         text(self.emoji, x, y)
     else
@@ -217,15 +215,13 @@ end
 
 
 
-
-
 -- Catalyte class
 Catalyte = class(Mote)
 
 function Catalyte:init(x, y, effectRadius)
     Mote.init(self, x, y)  -- Adjust effect radius as needed
     self.size = MOTE_SIZE * 1.25
-    self.effectRadius = effectRadius or MOTE_SIZE * 8
+    self.effectRadius = effectRadius or MOTE_SIZE * 4.5
 end
 
 function Catalyte:registerWith(neighbors)
