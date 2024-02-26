@@ -210,8 +210,8 @@ function ZoomScroller:frameToViewMapping(frame)
     return allMappings
 end
 
-function ZoomScroller:getDrawingParameters3(nativePosition, nativeSize, allMappings)
-    for index, mapping in ipairs(allMappings) do
+function ZoomScroller:getDrawingParameters(nativePosition, nativeSize)
+    for index, mapping in ipairs(self.zoomMapping) do
         local absoluteSourceBounds = mapping.absoluteSourceBounds
         local zoomedSectionBounds = mapping.zoomedSectionBounds
         
@@ -241,4 +241,33 @@ function ZoomScroller:getDrawingParameters3(nativePosition, nativeSize, allMappi
     
     -- Return nil if the mote isn't within any visible zoomed section
     return nil
+end
+
+function ZoomScroller:updateMapping(frame)
+    -- Generate the mapping tables based on the current frame
+    local mapping = self:frameToViewMapping(frame)
+    -- Persist this mapping for use in other operations like tapping
+    self.zoomMapping = mapping
+end
+
+function ZoomScroller:zoomedPosToAbsolutePos(x, y)
+    for _, mapping in ipairs(self.zoomMapping) do
+        local zsBounds = mapping.zoomedSectionBounds  -- Zoomed/Screen section bounds
+        if x >= zsBounds.left and x <= zsBounds.left + zsBounds.width and
+        y >= zsBounds.bottom and y <= zsBounds.bottom + zsBounds.height then
+            -- Calculate the position within the zoomed section as a ratio
+            local xRatio = (x - zsBounds.left) / zsBounds.width
+            local yRatio = (y - zsBounds.bottom) / zsBounds.height
+            
+            -- Apply the ratio to the absoluteSourceBounds to find the absolute position
+            local asBounds = mapping.absoluteSourceBounds  -- Absolute source bounds
+            local absoluteX = asBounds.left + xRatio * asBounds.width
+            local absoluteY = asBounds.bottom + yRatio * asBounds.height
+            
+            return absoluteX, absoluteY
+        end
+    end
+    
+    -- If (x, y) does not fall within any zoomedSectionBounds, return nil to indicate no mapping found
+    return nil, nil
 end

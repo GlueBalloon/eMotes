@@ -157,7 +157,8 @@ function Mote:isVisibleIn(frame, visibleAreas)
     return false
 end
 
-function Mote:drawWithParams(x, y, size)
+function Mote:drawFromParams(x, y, size)
+    local x, y, size = self.drawingParams.x, self.drawingParams.y, self.drawingParams.size
     pushStyle()
     fill(self.color)
     noStroke()

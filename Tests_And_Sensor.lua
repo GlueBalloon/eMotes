@@ -259,6 +259,8 @@ function Sensor.tapUpdate(event,self,t)
         elseif t.state == ENDED 
         and event.totalMove < 10  -- the finger should not have moved too much ...
         and (ElapsedTime-event.t0) < 0.5 then -- and delay should not be too long
+            event.x = t.x
+            event.y = t.y
             event:callback()
         end
     end

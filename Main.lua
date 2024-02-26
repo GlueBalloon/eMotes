@@ -64,6 +64,9 @@ function setup()
     sensor:onDrag(function(event) 
         zoomScroller:dragCallback(event)
     end)
+    sensor:onTap(function(event)
+        tapCallback(event)
+    end)
     
     calculateTextSize()
     
@@ -123,14 +126,15 @@ function draw()
     background(40, 40, 50)
     spriteMode(CENTER)
     
-    local mapping = zoomScroller:frameToViewMapping(frame)
+    zoomScroller:updateMapping(frame)
+    
     for i, mote in ipairs(motes) do
         updateGrid(mote, nextGrid)
         checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
         mote:update()
-        local drawingParams = zoomScroller:getDrawingParameters3(mote.position, mote.size, mapping)
-        if drawingParams then
-            mote:drawWithParams(drawingParams.x, drawingParams.y, drawingParams.size)
+        mote.drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size)
+        if mote.drawingParams then
+            mote:drawFromParams()
             motesDrawn = motesDrawn + 1
         else
             motesNotDrawn = motesNotDrawn + 1
@@ -269,4 +273,36 @@ function testNumVisibleAreas()
     assert(#areas == expectedResults[3], "Test 3 Failed: Expected 4 visible areas, got " .. #areas)
     
     print("All tests passed.")
+end
+
+function tapCallback(event)
+    -- Convert the zoomed position to an absolute position
+    print(event.x)
+    local absX, absY = zoomScroller:zoomedPosToAbsolutePos(event.x, event.y)
+    if not absX or not absY then return end -- Early exit if conversion failed
+    
+    -- Calculate the grid cell coordinates
+    local gridX = math.floor(absX / gridSize) + 1
+    local gridY = math.floor(absY / gridSize) + 1
+    
+    -- Access the motes in the identified grid cell
+    local motesInCell = currentGrid[gridX] and currentGrid[gridX][gridY]
+    if motesInCell then
+        for _, mote in ipairs(motesInCell) do
+            -- Check if the mote's drawingParams place it under the tap
+            local dp = mote.drawingParams
+            if dp then
+                -- Check if the tap is within the mote's on-screen bounds
+                local left = dp.x - dp.size / 2
+                local right = dp.x + dp.size / 2
+                local bottom = dp.y - dp.size / 2
+                local top = dp.y + dp.size / 2
+                
+                if event.x >= left and event.x <= right and event.y >= bottom and event.y <= top then
+                    print("Tapped on mote:", mote.emoji or "no emoji", "at:", dp.x, dp.y)
+                    return -- Exit after finding the first mote that matches to avoid multiple selections
+                end
+            end
+        end
+    end
 end
