@@ -77,8 +77,6 @@ end
 
 
 
-
-
 -- Sensor by jmv38
 -- a class to interpret touch events
 -- usage:
@@ -106,6 +104,7 @@ function Sensor:init(t)
     self:setParent(t)
     self.events = {}
     self.doNotInterceptTouches = false
+    self.lastTapTime = 0 
 end
 
 function Sensor:setParent(t)
@@ -316,6 +315,29 @@ function Sensor.swipeUpdate(event,self,t)
             if event.dx ~= 0 or event.dy ~= 0 then
                 event:callback() -- use event.dx and .dy to know the swipe direction
             end
+        end
+    end
+end
+
+-- double-tap gesture
+function Sensor:onDoubleTap(callback)
+    self:register("onDoubleTap", self.doubleTapUpdate, callback)
+end
+function Sensor.doubleTapUpdate(event, self, t)
+    if t.state == ENDED then
+        local currentTime = ElapsedTime
+        local doubleTapThreshold = 0.3 -- Define the maximum time interval between taps for a double-tap
+        if self.lastTapTime and currentTime - self.lastTapTime <= doubleTapThreshold then
+            -- Check if the double-tap occurred within the sensor's area
+            if self:inbox(t) then
+                event.x = t.x
+                event.y = t.y
+                event.touch = t
+                event:callback()
+                self.lastTapTime = 0 -- Reset lastTapTime to avoid triple-tap issues
+            end
+        else
+            self.lastTapTime = currentTime
         end
     end
 end

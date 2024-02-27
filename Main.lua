@@ -57,6 +57,9 @@ function setup()
     sensor:onTap(function(event)
         tapCallback(event)
     end)
+    sensor:onDoubleTap(function(event)
+        zoomScroller:doubleTapCallback(event)
+    end)
     
     calculateTextSize()
     
