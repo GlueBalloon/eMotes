@@ -1,10 +1,11 @@
-PRINTALITTLETIME = 1.02
+PRINTALITTLETIME = 1.2
 
-function printALittle(aString)
-    if ElapsedTime < PRINTALITTLETIME then
-        print(aString)
+function printALittle(...)
+    if ElapsedTime < PRINTALITTLETIME + 1 and ElapsedTime > 1 then
+        print(...)
     end
 end
+
 
 function testNeighborDetection()
     -- Create test motes
@@ -19,7 +20,7 @@ function testNeighborDetection()
     
     -- Update grid with test motes
     for _, mote in ipairs(testMotes) do
-        updateGrid(mote)
+        updateGrid(mote, grid)
         --       print("Updated grid for mote at " .. tostring(mote.position))
     end
     
@@ -60,7 +61,7 @@ function testWrappedNeighbors()
     
     -- Run checkForNeighbors on each mote
     for _, mote in ipairs(testMotes) do
-        updateGrid(mote) -- Update grid for each mote
+        updateGrid(mote, currentGrid) -- Update grid for each mote
         mote.neighbors = checkForNeighbors(mote, currentGrid) -- Check neighbors
     end
     
@@ -205,7 +206,7 @@ function Sensor.dropUpdate(event,self,t)
     end
 end
 
--- touched gesture (this is like COUDEA touched function)
+-- touched gesture (this is like CODEA touched function)
 function Sensor:onTouched(callback)
     self:register("onTouched", self.touchedUpdate, callback)
 end
@@ -258,6 +259,8 @@ function Sensor.tapUpdate(event,self,t)
         elseif t.state == ENDED 
         and event.totalMove < 10  -- the finger should not have moved too much ...
         and (ElapsedTime-event.t0) < 0.5 then -- and delay should not be too long
+            event.x = t.x
+            event.y = t.y
             event:callback()
         end
     end
