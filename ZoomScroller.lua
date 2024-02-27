@@ -54,14 +54,22 @@ function ZoomScroller:zoomCallback(event)
     local currentDistance = math.sqrt((touch1.x - touch2.x)^2 + (touch1.y - touch2.y)^2)
     local distanceChange = currentDistance - initialDistance
     
-    local currentMidpoint = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
+    -- Determine the center of the zoom operation
+    local zoomCenter
+    if self.trackedMote then
+        -- Center the zoom on the tracked mote
+        zoomCenter = vec2(self.trackedMote.drawingParams.x, self.trackedMote.drawingParams.y)
+    else
+        -- Use the midpoint of the pinch gesture
+        zoomCenter = vec2((touch1.x + touch2.x) / 2, (touch1.y + touch2.y) / 2)
+    end
     
     if touch1.state == BEGAN or touch2.state == BEGAN then
         self.isZooming = true
-        self.frame.lastMidpoint = currentMidpoint
+        self.frame.lastMidpoint = zoomCenter
         self.frame.initialDistance = initialDistance
     else
-        local midpointChange = currentMidpoint - self.frame.lastMidpoint
+        local midpointChange = zoomCenter - self.frame.lastMidpoint
         
         if distanceChange ~= 0 and self.frame.initialDistance then
             local scaleChange = currentDistance / self.frame.initialDistance
@@ -71,11 +79,12 @@ function ZoomScroller:zoomCallback(event)
             local newHeight = self.frame.height * scaleChange
             
             if newWidth < WIDTH or newHeight < HEIGHT then
+                -- Prevent the frame from becoming smaller than the viewport
                 return
             end
             
-            local offsetX = (self.frame.width - newWidth) * ((currentMidpoint.x - self.frame.x) / self.frame.width)
-            local offsetY = (self.frame.height - newHeight) * ((currentMidpoint.y - self.frame.y) / self.frame.height)
+            local offsetX = (self.frame.width - newWidth) * ((zoomCenter.x - self.frame.x) / self.frame.width)
+            local offsetY = (self.frame.height - newHeight) * ((zoomCenter.y - self.frame.y) / self.frame.height)
             
             self.frame.x = self.frame.x + offsetX
             self.frame.y = self.frame.y + offsetY
@@ -88,12 +97,13 @@ function ZoomScroller:zoomCallback(event)
             self.frame.y = self.frame.y + midpointChange.y
         end
         
-        self.frame.lastMidpoint = currentMidpoint
+        self.frame.lastMidpoint = zoomCenter
     end
 end
 
 function ZoomScroller:dragCallback(event)
-    if self.isZooming then return end
+    if self.isZooming or self.trackedMote then return end
+    print("is dragging")
     self:repositionBoundsIfOffscreen()
     
     local touch = event.touch -- Assuming single-finger touch
