@@ -19,16 +19,6 @@ fps = 0
 motesDrawn = 0
 motesNotDrawn = 0
 
--- Function to check if a mote is visible on screen
-function isMoteVisible(mote)
-    -- Calculate the transformed position
-    local transformedX = (mote.position.x - zoomOrigin.x) * zoomLevel + zoomOrigin.x
-    local transformedY = (mote.position.y - zoomOrigin.y) * zoomLevel + zoomOrigin.y
-    
-    -- Check if the transformed position is within screen bounds
-    return transformedX >= 0 and transformedX <= WIDTH and transformedY >= 0 and transformedY <= HEIGHT
-end
-
 -- Function to calculate appropriate text size for emotes
 function calculateTextSize()
     local targetWidth = MOTE_SIZE
@@ -78,6 +68,12 @@ function setup()
         table.insert(motes, Mote(math.random(WIDTH), math.random(HEIGHT)))
     end
 
+    -- Randomly select a mote to track
+    local randomIndex = math.random(#motes)
+    zoomScroller.trackedMote = motes[randomIndex] -- Make trackedMote a global or a member of a relevant class
+    zoomScroller:followTrackedMote()
+    
+    parameter.watch("zoomScroller.trackedMote.position")
     parameter.watch("visibleCorner")
     parameter.watch("ratioTableCount")
     parameter.number("TIMESCALE", 0.1, 50, 1)  -- Slider from 0.1x to 5x speed
@@ -95,6 +91,12 @@ function setup()
         testNeighborDetection()
         testWrappedNeighbors()
     end
+end
+
+function centerViewOnMote(mote)
+    -- Assuming zoomScroller is a global or accessible object
+    zoomScroller.frame.x = mote.position.x
+    zoomScroller.frame.y = mote.position.y
 end
 
 function updateWindDirection()
@@ -140,7 +142,10 @@ function draw()
             motesNotDrawn = motesNotDrawn + 1
         end
     end
-       
+    -- Update the frame to follow the tracked mote, if it exists
+    zoomScroller:followTrackedMote()
+    
+    
     popStyle()
     
     currentGrid, nextGrid = nextGrid, currentGrid
@@ -300,9 +305,11 @@ function tapCallback(event)
                 
                 if event.x >= left and event.x <= right and event.y >= bottom and event.y <= top then
                     print("Tapped on mote:", mote.emoji or "no emoji", "at:", dp.x, dp.y)
+                    zoomScroller.trackedMote = mote
                     return -- Exit after finding the first mote that matches to avoid multiple selections
                 end
             end
         end
+        zoomScroller.trackedMote = nil
     end
 end

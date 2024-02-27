@@ -6,6 +6,7 @@ function ZoomScroller:init(anImage, x, y, width, height)
     -- Constructor for the ZoomableFrame class
     self.frame = {x = x or WIDTH / 2, y = y or HEIGHT / 2, width = width or WIDTH, height = height or HEIGHT, lastMidpoint = nil, initialDistance = nil}
     self.image = anImage
+    self.trackedMote = nil
 end
 
 function ZoomScroller:repositionBoundsIfOffscreen()
@@ -17,21 +18,29 @@ function ZoomScroller:repositionBoundsIfOffscreen()
     local halfHeight = bounds.height / 2
     
     -- Check if bounds are offscreen and reposition to immediately adjacent position
+    local swapOccurred = false
     -- Right edge offscreen
     if bounds.x - halfWidth > WIDTH then
         bounds.x = bounds.x - bounds.width
+        swapOccurred = true
     end
     -- Left edge offscreen
     if bounds.x + halfWidth < 0 then
         bounds.x = bounds.x + bounds.width
+        swapOccurred = true
     end
     -- Bottom edge offscreen
     if bounds.y - halfHeight > HEIGHT then
         bounds.y = bounds.y - bounds.height
+        swapOccurred = true
     end
     -- Top edge offscreen
     if bounds.y + halfHeight < 0 then
         bounds.y = bounds.y + bounds.height
+        swapOccurred = true
+    end
+    if swapOccurred then
+        print("swapOccurred")
     end
 end
 
@@ -211,6 +220,7 @@ function ZoomScroller:frameToViewMapping(frame)
 end
 
 function ZoomScroller:getDrawingParameters(nativePosition, nativeSize)
+    if not self.zoomMapping then return nil end
     for index, mapping in ipairs(self.zoomMapping) do
         local absoluteSourceBounds = mapping.absoluteSourceBounds
         local zoomedSectionBounds = mapping.zoomedSectionBounds
@@ -270,4 +280,17 @@ function ZoomScroller:zoomedPosToAbsolutePos(x, y)
     
     -- If (x, y) does not fall within any zoomedSectionBounds, return nil to indicate no mapping found
     return nil, nil
+end
+
+function ZoomScroller:getZoomedPosition(original)
+    -- Calculate ratios based on original screen dimensions
+    local ratioX = original.x / WIDTH
+    local ratioY = original.y / HEIGHT
+    
+    -- Apply these ratios to the frame's current state
+    -- Note: This assumes the frame's x and y represent the center of the zoomed area
+    local zoomedX = self.frame.x + (ratioX - 0.5) * self.frame.width
+    local zoomedY = self.frame.y + (ratioY - 0.5) * self.frame.height
+    
+    return vec2(zoomedX, zoomedY)
 end
