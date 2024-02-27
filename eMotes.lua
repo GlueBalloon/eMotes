@@ -168,7 +168,7 @@ function Mote:drawFromParams(x, y, size)
     if size >= transitionalSize then
         fill(255)
         fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
-        text(self.emoji, x, y)
+        text(self.emoji, x * 0.9969, y * 0.9992)
     else
         ellipse(x, y, size)
     end

@@ -139,6 +139,9 @@ function draw()
         mote:update()
         mote.drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size)
         if mote.drawingParams then
+            if zoomScroller.trackedMote == mote then
+                highlightTrackedMote(mote)
+            end
             mote:drawFromParams()
             motesDrawn = motesDrawn + 1
         else
@@ -146,8 +149,9 @@ function draw()
         end
     end
     -- Update the frame to follow the tracked mote, if it exists
-    zoomScroller:followTrackedMote()
-    
+    if zoomScroller.trackedMote then
+        zoomScroller:followTrackedMote()
+    end
     
     popStyle()
     
@@ -313,6 +317,71 @@ function tapCallback(event)
                 end
             end
         end
-        zoomScroller.trackedMote = nil
     end
+    zoomScroller.trackedMote = nil
+end
+
+-- Define warm colors to cycle through
+local warmColors = {
+    {255, 0, 0},  -- Red
+    {255, 165, 0}, -- Orange
+    {255, 255, 0}  -- Yellow
+}
+
+-- Color cycling and rotation state
+local colorCycleDuration = 2 -- Duration in seconds for a full cycle through all colors
+local rotationDuration = 1.5 -- Duration in seconds for a full rotation around the ellipse
+local elapsedTime = 0
+
+function interpolateColor(color1, color2, t)
+    local r = color1[1] + (color2[1] - color1[1]) * t
+    local g = color1[2] + (color2[2] - color1[2]) * t
+    local b = color1[3] + (color2[3] - color1[3]) * t
+    return color(r, g, b)
+end
+
+dotPositions = {}
+trailLength = 15
+
+function highlightTrackedMote(mote)
+    -- Update elapsed time
+    elapsedTime = elapsedTime + DeltaTime
+    local colorTime = elapsedTime % colorCycleDuration
+    local rotationTime = elapsedTime % rotationDuration
+    local tColor = colorTime / colorCycleDuration
+    local tRotation = rotationTime / rotationDuration
+    
+    -- Determine current and next color indices based on elapsed time
+    local numColors = #warmColors
+    local blendFactor = tColor * numColors
+    local colorIndex = math.floor(blendFactor) % numColors + 1
+    local nextColorIndex = (colorIndex % numColors) + 1
+    
+    -- Interpolate between the current and next colors
+    local currentColor = interpolateColor(warmColors[colorIndex], warmColors[nextColorIndex], blendFactor % 1)
+    
+    -- Calculate rotation position
+    local angle = tRotation * 2 * math.pi -- Full circle
+    local ellipseRadius = (mote.drawingParams.size + 10) / 2
+    local dotX = mote.drawingParams.x + ellipseRadius * math.cos(angle)
+    local dotY = mote.drawingParams.y + ellipseRadius * math.sin(angle)
+    
+    -- Update dot positions for the trail
+    table.insert(dotPositions, {x = dotX, y = dotY, color = currentColor})
+    if #dotPositions > trailLength then
+        table.remove(dotPositions, 1)
+    end
+    
+    -- Set drawing parameters
+    pushStyle() -- Save current drawing style settings
+    
+    -- Draw each dot in the trail
+    for i, pos in ipairs(dotPositions) do
+        local fadeFactor = i / #dotPositions -- Calculate fade factor based on position in the trail
+        fill(pos.color.r, pos.color.g, pos.color.b, fadeFactor * 255) -- Fade color
+        noStroke()
+        ellipse(pos.x, pos.y, math.max(mote.drawingParams.size * 0.25 * fadeFactor, 5)) -- Draw the ellipse with decreasing size
+    end
+    
+    popStyle() -- Restore previous drawing style settings
 end
