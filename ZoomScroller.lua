@@ -127,52 +127,41 @@ function ZoomScroller:dragCallback(event)
 end
 
 
+function ZoomScroller:tapCallback(event)
+    self.trackedMote = nil
+end
+
 function ZoomScroller:doubleTapCallback(event)
-    -- Determine the center for the zoom operation
-    local zoomCenter
-    if self.trackedMote then
-        zoomCenter = vec2(self.trackedMote.drawingParams.x, self.trackedMote.drawingParams.y)
-    else
-        zoomCenter = event.touch.pos
+    -- Convert the zoomed position to an absolute position
+    local absX, absY = self:zoomedPosToAbsolutePos(event.x, event.y)
+    if not absX or not absY then return end -- Early exit if conversion failed
+    
+    -- Calculate the grid cell coordinates
+    local gridX = math.floor(absX / gridSize) + 1
+    local gridY = math.floor(absY / gridSize) + 1
+    
+    -- Access the motes in the identified grid cell
+    local motesInCell = currentGrid[gridX] and currentGrid[gridX][gridY]
+    if motesInCell then
+        for _, mote in ipairs(motesInCell) do
+            -- Check if the mote's drawingParams place it under the tap
+            local dp = mote.drawingParams
+            if dp then
+                -- Check if the tap is within the mote's on-screen bounds
+                local left = dp.x - dp.size / 2
+                local right = dp.x + dp.size / 2
+                local bottom = dp.y - dp.size / 2
+                local top = dp.y + dp.size / 2
+                
+                if event.x >= left and event.x <= right and event.y >= bottom and event.y <= top then
+                    print("Tapped on mote:", mote.emoji or "no emoji", "at:", dp.x, dp.y)
+                    self.trackedMote = mote
+                    return -- Exit after finding the first mote that matches to avoid multiple selections
+                end
+            end
+        end
     end
-    
-    -- Determine the target width and height based on zoom state
-    local targetWidth, targetHeight
-    local isZoomedIn = self.frame.width > WIDTH or self.frame.height > HEIGHT
-    
-    if isZoomedIn then
-        -- Zoom out
-        targetWidth = WIDTH
-        targetHeight = HEIGHT
-    else
-        -- Zoom in
-        local scaleChange = 10 -- Adjusting the scale factor for zooming in
-        targetWidth = self.frame.width * scaleChange
-        targetHeight = self.frame.height * scaleChange
-    end
-    
-    -- Calculate the offset to keep the zoom center consistent
-    local offsetX = (self.frame.width - targetWidth) * ((zoomCenter.x - self.frame.x) / self.frame.width)
-    local offsetY = (self.frame.height - targetHeight) * ((zoomCenter.y - self.frame.y) / self.frame.height)
-    
-    -- Tween duration and easing function
-    local tweenDuration = 0.25 -- Duration in seconds
-    local tweenEasing = tween.easing.cubicInOut
-    
-    -- Perform the tween
-    tween(tweenDuration, self.frame, {
-        x = self.frame.x + offsetX,
-        y = self.frame.y + offsetY,
-        width = targetWidth,
-        height = targetHeight
-    }, tweenEasing, function()
-        -- Callback function after tween is complete
-        -- Ensure the frame remains within bounds after zooming
-        self:repositionBoundsIfOffscreen()
-        
-        -- Optionally, update any necessary state or mapping after the zoom operation
-        self:updateMapping(self.frame)
-    end)
+    self.trackedMote = nil
 end
 
 function ZoomScroller:drawTiledImageInBounds(anImageOrNot)
@@ -355,8 +344,7 @@ function ZoomScroller:getZoomedPosition(original)
 end
 
 function ZoomScroller:followTrackedMote()
-    if self.trackedMote then
-        
+    if self.trackedMote then      
         local zoomedPos
         if self.trackedMote.drawingParams then
             zoomedPos = vec2(self.trackedMote.drawingParams.x, self.trackedMote.drawingParams.y)

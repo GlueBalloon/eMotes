@@ -157,7 +157,15 @@ function Mote:isVisibleIn(frame, visibleAreas)
     return false
 end
 
-function Mote:drawFromParams(x, y, size)
+function Mote:draw()
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    ellipse(self.position.x, self.position.y, self.size)
+    popStyle()
+end
+
+function Mote:drawFromParams()
     local x, y, size = self.drawingParams.x, self.drawingParams.y, self.drawingParams.size
     pushStyle()
     fill(self.color)

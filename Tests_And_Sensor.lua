@@ -105,6 +105,7 @@ function Sensor:init(t)
     self.events = {}
     self.doNotInterceptTouches = false
     self.lastTapTime = 0 
+    self.debug = false
 end
 
 function Sensor:setParent(t)
@@ -168,6 +169,9 @@ function Sensor.zoomUpdate(event,self,t)
             end
             event.dw = dw
             event.dh = dh
+            if self.debug then
+                print("firing onZoom for "..t.id)
+            end
             event:callback()
         end
     else
@@ -182,6 +186,9 @@ function Sensor:onDrag(callback)
 end
 function Sensor.dragUpdate(event,self,t)
     if self.touches[t.id] then
+        if self.debug then
+            print("firing onDrag for "..t.id)
+        end
         event.touch = t
         event:callback()
     end
@@ -199,6 +206,9 @@ function Sensor.dropUpdate(event,self,t)
             droppedObject = self.parent
             self.doNotInterceptOnce = true
         else
+            if self.debug then
+                print("firing onDrop for "..t.id)
+            end
             event.object = droppedObject
             event:callback()
         end
@@ -211,6 +221,9 @@ function Sensor:onTouched(callback)
 end
 function Sensor.touchedUpdate(event,self,t)
     if self:inbox(t) then 
+        if self.debug then
+            print("firing onTouched for "..t.id)
+        end
         event.touch = t
         event:callback()
     end
@@ -237,6 +250,9 @@ function Sensor.touchUpdate(event,self,t)
     for i,t in pairs(self.touching) do state1= true ; break end
     --if state has changed, send callback
     if state1 ~= event.state then
+        if self.debug then
+            print("firing onTouch for "..t.id)
+        end
         event.state = state1
         event.touch = t
         event:callback()
@@ -258,6 +274,9 @@ function Sensor.tapUpdate(event,self,t)
         elseif t.state == ENDED 
         and event.totalMove < 10  -- the finger should not have moved too much ...
         and (ElapsedTime-event.t0) < 0.6 then -- and delay should not be too long
+            if self.debug then
+                print("firing onTap for "..t.id)
+            end
             event.x = t.x
             event.y = t.y
             event:callback()
@@ -280,6 +299,9 @@ function Sensor.longPressUpdate(event,self,t)
                 event.tween = nil
                 if event.totalMove > 10 or event.id ~= t.id then  event.cancel = true end
                 if event.cancel then return end
+                if self.debug then
+                    print("firing onLongPress for "..t.id)
+                end
                 event:callback()
             end)
         elseif t.state == MOVING and event.id == t.id then
@@ -308,6 +330,9 @@ function Sensor.swipeUpdate(event,self,t)
             event.dy = event.dy + t.deltaY
         elseif t.state == ENDED 
         and (ElapsedTime-event.t0) < 1 then -- delay should not be too long
+            if self.debug then
+                print("firing onSwipe for "..t.id)
+            end
             -- and the finger should have moved enough:
             local minMove = 70
             if abs(event.dx) < minMove  then event.dx = 0 end
@@ -324,20 +349,16 @@ function Sensor:onDoubleTap(callback)
     self:register("onDoubleTap", self.doubleTapUpdate, callback)
 end
 function Sensor.doubleTapUpdate(event, self, t)
-    if t.state == ENDED then
-        local currentTime = ElapsedTime
-        local doubleTapThreshold = 0.3 -- Define the maximum time interval between taps for a double-tap
-        if self.lastTapTime and currentTime - self.lastTapTime <= doubleTapThreshold then
-            -- Check if the double-tap occurred within the sensor's area
-            if self:inbox(t) then
-                event.x = t.x
-                event.y = t.y
-                event.touch = t
-                event:callback()
-                self.lastTapTime = 0 -- Reset lastTapTime to avoid triple-tap issues
+    if t.state == ENDED and t.tapCount == 2 then
+        -- Check if the double-tap occurred within the sensor's area
+        if self:inbox(t) then
+            if self.debug then
+                print("firing onDoubleTap for touch " .. tostring(t.id))
             end
-        else
-            self.lastTapTime = currentTime
+            event.x = t.x
+            event.y = t.y
+            event.touch = t
+            event:callback()
         end
     end
 end
