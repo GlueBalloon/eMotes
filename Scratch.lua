@@ -1,6 +1,8 @@
 
 
 function ZoomScroller:tapCallback(event)
+    isPaused = nil
+    self.trackedMote = nil
     -- Convert the zoomed position to an absolute position
     local absX, absY = self:zoomedPosToAbsolutePos(event.x, event.y)
     if not absX or not absY then return end -- Early exit if conversion failed
@@ -42,9 +44,35 @@ function ZoomScroller:tapCallback(event)
         end   
         -- Start the tween with per-frame updates
         tweenWithUpdates(duration, updateFunc, completeFunc)
+        
+        local originalEmoji = moteTapped.defaultEmoji
+        local newEmoji = moteTapped:randomStandardEmoji()
+        moteTapped.defaultEmoji = newEmoji -- Temporarily change to a new emoji
+        
+        -- Determine sound based on the new emoji's set
+        local soundToPlay = self:determineSoundForEmoji(newEmoji)
+        if soundToPlay then
+            sound(soundToPlay) -- Play the sound (assuming a 'sound' function or similar API)
+        end
+        
+        -- Schedule to change back after 2 seconds
+        tween.delay(0.8, function()
+            moteTapped.defaultEmoji = originalEmoji
+        end)
     end
-    self.trackedMote = nil
 end
+
+function ZoomScroller:determineSoundForEmoji(emoji)
+    -- Return a sound file path or identifier based on the emoji's set
+    -- Example:
+    if happyJoyfulSet and happyJoyfulSet[emoji] then
+        return "path/to/happy_sound.wav"
+    elseif curiousThoughtfulSet and curiousThoughtfulSet[emoji] then
+        return "path/to/curious_sound.wav"
+        -- Continue for other sets
+    end
+end
+
 
 -- General function to create a tween that calls an update function every frame
 function tweenWithUpdates(duration, updateFunc, completeFunc)
@@ -102,8 +130,7 @@ function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progres
         local endX = startX + attribute.length * math.cos(angle)
         local endY = startY + attribute.length * math.sin(angle)
         
-      --  stroke(attribute.color[1], attribute.color[2], attribute.color[3], alpha)
-        stroke(255, 215, 0, alpha) -- Gold color with fading
+        stroke(attribute.color[1], attribute.color[2], attribute.color[3], alpha)
         strokeWidth(lineWidth)
         line(startX, startY, endX, endY)
     end
@@ -115,58 +142,98 @@ function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progres
     popStyle()
 end
 
--- Simplified initialization for line lengths only
-function ZoomScroller:initializeLineAttributes(numLines, baseLineLength)
-    self.lineAttributes = {}
-    for i = 1, numLines do
-        -- Random length for each line, between baseLineLength and 1.5 times the baseLineLength
-        local length = baseLineLength + math.random() * baseLineLength * 1.5
-        self.lineAttributes[i] = {length = length}
-    end
-end
-
-function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progress)
-    if not self.lineAttributes then
-        self:initializeLineAttributes(15, baseLineLength) -- Initialize if not yet initialized
+function draw()
+    
+    -- Update frame count
+    frameCount = frameCount + 1
+    if ElapsedTime - lastTime >= 1 then
+        fps = frameCount / (ElapsedTime - lastTime)
+        frameCount = 0
+        lastTime = ElapsedTime
     end
     
+    motesDrawn = 0
+    motesNotDrawn = 0
+    local shouldMove = not (isPaused and isPaused.forRecording)
+    -- Clear the nextGrid for the next frame
+    nextGrid = {}
+    
+    if shouldMove then
+        updateWindDirection()
+    end
+    
+    local frame = zoomScroller.frame
     pushStyle()
-    local dp = mote.drawingParams
-    local numLines = 15
-    local angleStep = (math.pi * 2) / numLines
-    local startOffset = 2
-    local endOffset = 17
-    local offset = startOffset + (endOffset - startOffset) * progress
-    local alpha = 255 * (1 - progress) -- Fade out the lines
+    background(40, 40, 50)
+    spriteMode(CENTER)
     
-    local startPointRadius = (dp.size / 2) + offset
+    tint(148, 162, 223)
+    sprite(bgImage, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
+    noTint()
     
-    for i = 1, numLines do
-        local angle = i * angleStep
-        local attribute = self.lineAttributes[i]
-        local startX = dp.x + startPointRadius * math.cos(angle)
-        local startY = dp.y + startPointRadius * math.sin(angle)
-        local endX = startX + attribute.length * math.cos(angle)
-        local endY = startY + attribute.length * math.sin(angle)
-        
-        stroke(255, 215, 0, alpha) -- Gold color with fading
-        strokeWidth(lineWidth)
-        line(startX, startY, endX, endY)
+    if zoomActive then
+        zoomScroller:updateMapping(frame)
     end
     
-    if progress >= 1 then
-        self.lineAttributes = nil -- Reset attributes at the end of the animation
+    for i, mote in ipairs(motes) do
+        if shouldMove then
+            updateGrid(mote, nextGrid)
+            checkForNeighbors(mote, currentGrid)  -- Pass currentGrid for neighbor checking
+            mote:update()
+        end
+        if zoomActive then
+            mote.drawingParams = zoomScroller:getDrawingParameters(mote.position, mote.size)
+            if mote.drawingParams then
+                if zoomScroller.trackedMote == mote then
+                    highlightTrackedMote(mote)
+                end
+                mote:drawFromParams()
+                motesDrawn = motesDrawn + 1
+            else
+                motesNotDrawn = motesNotDrawn + 1
+            end
+        else 
+            mote:draw()
+        end
+    end
+    
+    -- Update the frame to follow the tracked mote, if it exists
+    if zoomActive and zoomScroller.trackedMote and shouldMove then
+        zoomScroller:followTrackedMote()
     end
     
     popStyle()
+    
+    currentGrid, nextGrid = nextGrid, currentGrid
 end
 
+function ZoomScroller:longPressCallback(event)
+    isPaused = { forRecording = true }
+    local moteTapped = self:detectMoteUnderTouch(event)
+    if moteTapped then
+        -- Set the app to a paused state specifically for recording
+        print("Long-pressed on mote for recording:", moteTapped.emoji or "no emoji", "at:", moteTapped.position.x, moteTapped.position.y)
+        -- Additional logic for showing recording UI and handling recording can be added here
+    else
+     --   isPaused = nil
+    end
+end
 
-
-
-
-
-
-
-
-
+function ZoomScroller:detectMoteUnderTouch(event)
+    local absX, absY = self:zoomedPosToAbsolutePos(event.x, event.y)
+    if not absX or not absY then return nil end -- Early exit if conversion failed
+    
+    local gridX = math.floor(absX / gridSize) + 1
+    local gridY = math.floor(absY / gridSize) + 1
+    
+    local motesInCell = currentGrid[gridX] and currentGrid[gridX][gridY]
+    if motesInCell then
+        for _, mote in ipairs(motesInCell) do
+            local dp = mote.drawingParams
+            if dp and event.x >= (dp.x - dp.size / 2) and event.x <= (dp.x + dp.size / 2) and event.y >= (dp.y - dp.size / 2) and event.y <= (dp.y + dp.size / 2) then
+                return mote
+            end
+        end
+    end
+    return nil
+end

@@ -61,6 +61,9 @@ function setup()
     sensor:onDoubleTap(function(event)
         zoomScroller:doubleTapCallback(event)
     end)
+    sensor:onLongPress(function(event) 
+    zoomScroller:longPressCallback(event) 
+    end)
     sensor.debug = true
     
     calculateTextSize()
@@ -295,7 +298,7 @@ local warmColors = {
 
 -- Color cycling and rotation state
 local colorCycleDuration = 2 -- Duration in seconds for a full cycle through all colors
-local rotationDuration = 0.35 -- Duration in seconds for a full rotation around the ellipse
+local rotationDuration = 2 -- Duration in seconds for a full rotation around the ellipse
 local elapsedTime = 0
 
 function interpolateColor(color1, color2, t)
@@ -306,7 +309,7 @@ function interpolateColor(color1, color2, t)
 end
 
 dotPositions = {}
-trailLength = 125
+trailLength = 12
 
 function highlightTrackedMote(mote)
     -- Update elapsed time
@@ -343,7 +346,7 @@ function highlightTrackedMote(mote)
     -- Draw each dot in the trail
     for i, pos in ipairs(dotPositions) do
         local fadeFactor = i / #dotPositions -- Calculate fade factor based on position in the trail
-        fill(pos.color.r, pos.color.g, pos.color.b, fadeFactor * 40) -- Fade color
+        fill(pos.color.r, pos.color.g, pos.color.b, fadeFactor * 250) -- Fade color
         noStroke()
         ellipse(pos.x, pos.y, math.max(mote.drawingParams.size * 0.25 * fadeFactor, 5)) -- Draw the ellipse with decreasing size
     end

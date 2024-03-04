@@ -1,20 +1,20 @@
 -- Mote class
 Mote = class()
-
-function Mote:randomStartEmoji()
-    local startEmojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", 
+Mote.standardEmojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", 
     "🙂", "🙃", "😉", "😌", "😗", "😙", "😚", "😋", "😛", "😝", "😜", 
     "🤪", "🤨", "🧐", "🤓", "😎", "😏", "😒", "😔", "😟", "😕", 
     "🙁", "🥺", "😢", "😠", "🤐", "🥴",
     "😳", "🤔", "🤭", "🤫", "🤥", "😶", "😐", 
     "😑", "😬", "🙄", "😯", "😴", "🤤",
     "😷", "🤒", "🤕", "🤠"}
-    return startEmojis[math.random(#startEmojis)]
+
+function Mote:randomStandardEmoji()
+    return self.standardEmojis[math.random(#Mote.standardEmojis)]
 end
 
 function Mote:init(x, y)
     self.size = MOTE_SIZE
-    self.emoji = math.random() < 0.4 and self:randomStartEmoji() or "😀"
+    self.emoji = math.random() < 0.4 and self:randomStandardEmoji() or "😀"
     self.defaultEmoji = self.emoji
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
@@ -38,7 +38,7 @@ function Mote:updateAppearance()
     --disappointing to a viewer
     if math.random() < 0.01 then
         if self.emoji == "😀" then
-            self.emoji = self:randomStartEmoji()
+            self.emoji = self:randomStandardEmoji()
         else  
             self.emoji = "😀"
         end

@@ -299,6 +299,9 @@ function Sensor.longPressUpdate(event,self,t)
                 event.tween = nil
                 if event.totalMove > 10 or event.id ~= t.id then  event.cancel = true end
                 if event.cancel then return end
+                event.x = t.x
+                event.y = t.y
+                event.touch = t
                 if self.debug then
                     print("firing onLongPress for "..t.id)
                 end
