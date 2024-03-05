@@ -340,6 +340,18 @@ function ZoomScroller:tapCallback(event)
         end
         tweenWithUpdates(duration, updateFunc, completeFunc)
         
+        -- Define the size pop effect
+        local originalSize = moteTapped.size
+        local popSize = originalSize * 2 -- Increase to 150% of original size
+        local duration = 0.4 -- Duration of the pop effect
+        
+        -- Tween for the pop effect
+        tween(duration, moteTapped, {size = popSize}, tween.easing.backOut, function()
+            -- After popping, bounce back to the original size
+            tween(duration, moteTapped, {size = originalSize}, tween.easing.backIn)
+        end)
+
+        
         -- New logic to select a category, then an emoji and its sound
         local category = pickRandomCategory() -- Assuming this function is globally available
         local originalEmoji = moteTapped.defaultEmoji
@@ -350,7 +362,7 @@ function ZoomScroller:tapCallback(event)
         if soundPath then
             local pitchVariation = math.random(110, 140) / 100 -- Random pitch between 0.8 and 1.2
             --sound(asset.documents.Dropbox[soundPath], 1, pitchVariation)
-            sound(asset.downloaded.Game_Sounds_One.Female_Grunt_5, 1, pitchVariation)
+            sound(asset.downloaded.Game_Sounds_One.Female_Grunt_5, 1, pitchVariation) --for testing
         end
         
         -- Schedule to change back after a delay

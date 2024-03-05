@@ -32,18 +32,6 @@ end
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
-    --[[
-    --code commented out but left in as a reminder:
-    --randomly removing special-case emoji feels
-    --disappointing to a viewer
-    if math.random() < 0.01 then
-        if self.emoji == "😀" then
-            self.emoji = self:randomStandardEmoji()
-        else  
-            self.emoji = "😀"
-        end
-    end
-    ]]
     if self.state == "hot" then
         self.emoji = "🥵"
         self.color = color(229, 143, 46) -- Hot color
@@ -175,7 +163,7 @@ function Mote:drawFromParams()
     -- Use the provided x, y, and size to draw
     if size >= transitionalSize then
         fill(255)
-        fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
+        fontSize(size * 0.75)
         text(self.emoji, x * 0.9969, y * 0.9992)
     else
         ellipse(x, y, size)

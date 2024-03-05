@@ -1,3 +1,4 @@
+--- ignore this page
 MOTE_SIZE = 3
 MOTE_COUNT = 3000
 -- Global time scale variable

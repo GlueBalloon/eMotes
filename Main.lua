@@ -97,6 +97,7 @@ function updateWindDirection()
     -- Slowly change the wind direction over time
     WIND_ANGLE = noise(ElapsedTime * 0.1) * math.pi * 2
 end
+--[[
 
 --should draw zoomed motes not a zoomed image
 function draw()
@@ -159,6 +160,7 @@ function draw()
     
     currentGrid, nextGrid = nextGrid, currentGrid
 end
+]]
 
 -- Limit the magnitude of a vector
 function limit(vec, max)

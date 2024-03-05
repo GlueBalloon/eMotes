@@ -286,7 +286,7 @@ function ZoomScroller:getDrawingParameters(nativePosition, nativeSize)
             local adjustedPosX = (nativePosition.x - absoluteSourceBounds.left) * zoomRatioWidth + absoluteSourceBounds.left + displacementX
             local adjustedPosY = (nativePosition.y - absoluteSourceBounds.bottom) * zoomRatioHeight + absoluteSourceBounds.bottom + displacementY
             
-            local adjustedSize = nativeSize * zoomRatioWidth  -- for uniform scaling
+            local adjustedSize = nativeSize * zoomRatioWidth -- for uniform scaling
             
             -- The mote is within the visible zoomed section, return the adjusted position and size
             return {
