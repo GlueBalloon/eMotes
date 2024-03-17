@@ -246,25 +246,6 @@ function ZoomScroller:detectMoteUnderTouch(event)
 end
 
 ---- Define emoji categories with sounds as tables
-local categories = {
-    HappyJoyful = {
-        emojis = {"😀", "😃", "😄", "🙃", "🙂", "😏", "😁", "😆", "😅", "😊", "😇", "😉", "😌", "🤭", "😋", "😛", "😝", "😜", "🤪", "🤓", "😎", "😙", "😚"},
-        sounds = {"happy_sound1.mp3"} -- Add more sounds as needed
-    },
-    CuriousThoughtful = {
-        emojis = {"🤨", "🧐", "🤔", "😗"},
-        sounds = {"curious_sound1.mp3"} -- Add more sounds as needed
-    },
-    -- Define other categories similarly
-    SpecialCases = {
-        customSounds = {
-            ["🤠"] = {"yeehaw_sound.mp3"},
-            ["👻"] = {"boo_sound.mp3"},
-            ["🤖"] = {"robot_sound.mp3"},
-            ["👽"] = {"alien_sound.mp3"}
-        }
-    }
-}
 
 -- Function to pick a random category
 local function pickRandomCategory()
@@ -342,7 +323,7 @@ function ZoomScroller:tapCallback(event)
         
         -- Define the size pop effect
         local originalSize = moteTapped.size
-        local popSize = originalSize * 2 -- Increase to 150% of original size
+        local popSize = originalSize * 1.5 -- Increase to 150% of original size
         local duration = 0.4 -- Duration of the pop effect
         
         -- Tween for the pop effect
@@ -361,8 +342,8 @@ function ZoomScroller:tapCallback(event)
         -- Play the sound with pitch variation
         if soundPath then
             local pitchVariation = math.random(110, 140) / 100 -- Random pitch between 0.8 and 1.2
-            --sound(asset.documents.Dropbox[soundPath], 1, pitchVariation)
-            sound(asset.downloaded.Game_Sounds_One.Female_Grunt_5, 1, pitchVariation) --for testing
+            sound(soundPath, 1, pitchVariation)
+           -- sound(asset.downloaded.Game_Sounds_One.Female_Grunt_5, 1, pitchVariation) --for testing
         end
         
         -- Schedule to change back after a delay
