@@ -269,6 +269,7 @@ local function pickEmojiAndSound(category)
         local sound = soundOptions[math.random(#soundOptions)]
         return emoji, sound
     else
+        print(category)
         local emojis = categories[category].emojis
         local emoji = emojis[math.random(#emojis)]
         local soundOptions = categories[category].sounds
@@ -311,7 +312,7 @@ function ZoomScroller:tapCallback(event)
             end
         end
     end
-    if moteTapped then
+    if moteTapped and not moteTapped.tappedTween then
         -- Start the visual feedback for tapping
         local lineLength = moteTapped.drawingParams.size * 0.1
         local lineWidth = 2
@@ -327,15 +328,21 @@ function ZoomScroller:tapCallback(event)
         local duration = 0.4 -- Duration of the pop effect
         
         -- Tween for the pop effect
-        tween(duration, moteTapped, {size = popSize}, tween.easing.backOut, function()
+        moteTapped.tappedTween = tween(duration, moteTapped, {size = popSize}, tween.easing.backOut, function()
             -- After popping, bounce back to the original size
-            tween(duration, moteTapped, {size = originalSize}, tween.easing.backIn)
+            tween(duration, moteTapped, {size = originalSize}, tween.easing.backIn, function()
+                moteTapped.tappedTween = nil
+            end)
         end)
 
         
         -- New logic to select a category, then an emoji and its sound
         local category = pickRandomCategory() -- Assuming this function is globally available
         local originalEmoji = moteTapped.defaultEmoji
+        -- Force category if special-case emoji
+        if moteTapped.emoji == "🥶" then category = "TooCold"
+        elseif moteTapped.emoji == "🥵" then category = "TooHot" end
+
         local newEmoji, soundPath = pickEmojiAndSound(category) -- Assuming this function is globally available
         moteTapped.defaultEmoji = newEmoji -- Temporarily change to a new emoji
         

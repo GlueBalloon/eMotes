@@ -7,6 +7,7 @@ function ZoomScroller:init(anImage, x, y, width, height)
     self.frame = {x = x or WIDTH / 2, y = y or HEIGHT / 2, width = width or WIDTH, height = height or HEIGHT, lastMidpoint = nil, initialDistance = nil}
     self.image = anImage
     self.trackedMote = nil
+    self.zoomMapping = {}
 end
 
 function ZoomScroller:repositionBoundsIfOffscreen()
