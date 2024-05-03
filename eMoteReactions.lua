@@ -57,20 +57,21 @@ categories = {
             ["🤖"] = {asset.documents.eMotes.Robot_Sounds["8-bit-game.wav"],
                 asset.documents.eMotes.Robot_Sounds["droid-alien.wav"]
             },
-            ["👽"] = {asset.documents.eMotes.Alien_Sounds["weird-alien-talking.wav"]}
+            ["👽"] = {asset.documents.eMotes.Alien_Sounds["weird-alien-talking.wav"]},
+            ["🤮"] = {asset.documents.eMotes.Sick_Sounds.vomit}
         }
     },
     FeelingSick = {
-        emojis = {"🤒", "🤕", "🤢", "🤮", "😷", "🤧"},
+        emojis = {"🤒", "🤕", "🤢", "😷", "🤧"},
         sounds = {asset.documents.eMotes.Sick_Sounds.cough,
-            asset.documents.eMotes.Sick_Sounds.vomit,
             asset.documents.eMotes.Sick_Sounds["wheezy-coughing.wav"]
         } 
     },
-    PartyTime = {
+ --[[   --sound is too long
+        PartyTime = {
         emojis = {"🥳", "🎉", "🎊", "🍾", "🥂", "🎈", "🕺", "💃"},
         sounds = {asset.documents.eMotes.Party_Sounds["small-group-laughing-6192.wav"]} 
-    },
+    },]]
     LoveAffection = {
         emojis = {"❤️", "💛", "💚", "💙", "💜", "🧡", "😍", "😘", "💑", "💏", "💌"},
         sounds = {asset.documents.eMotes.Lovey_Dovey_Sounds.kisspop,
