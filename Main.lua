@@ -300,7 +300,7 @@ local warmColors = {
 
 -- Color cycling and rotation state
 local colorCycleDuration = 2 -- Duration in seconds for a full cycle through all colors
-local rotationDuration = 2 -- Duration in seconds for a full rotation around the ellipse
+local rotationDuration = 0.7 -- Duration in seconds for a full rotation around the ellipse
 local elapsedTime = 0
 
 function interpolateColor(color1, color2, t)
@@ -311,7 +311,7 @@ function interpolateColor(color1, color2, t)
 end
 
 dotPositions = {}
-trailLength = 12
+trailLength = 100
 
 function highlightTrackedMote(mote)
     -- Update elapsed time
