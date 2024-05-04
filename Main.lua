@@ -347,7 +347,7 @@ function highlightTrackedMote(mote)
     
     -- Draw each dot in the trail
     for i, pos in ipairs(dotPositions) do
-        local fadeFactor = i / #dotPositions -- Calculate fade factor based on position in the trail
+        local fadeFactor = i / #dotPositions * 0.85 -- Calculate fade factor based on position in the trail
         fill(pos.color.r, pos.color.g, pos.color.b, fadeFactor * 250) -- Fade color
         noStroke()
         ellipse(pos.x, pos.y, math.max(mote.drawingParams.size * 0.25 * fadeFactor, 5)) -- Draw the ellipse with decreasing size
