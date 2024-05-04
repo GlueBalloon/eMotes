@@ -1,4 +1,6 @@
 --- ignore this page
+--- it's for frame rate comparison when needed
+--[[
 MOTE_SIZE = 3
 MOTE_COUNT = 3000
 -- Global time scale variable
@@ -310,3 +312,4 @@ function touched(touch)
         table.insert(motes, newMote)
     end
 end
+]]
