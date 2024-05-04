@@ -127,6 +127,8 @@ function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progres
     local offset = startOffset + (endOffset - startOffset) * progress
     local alpha = 255 * (1 - progress) -- Fade out the lines
     
+    if not dp then return end --jic
+    
     local startPointRadius = (dp.size / 2) + offset
     
     for i = 1, numLines do
@@ -278,6 +280,11 @@ local function pickEmojiAndSound(category)
     end
 end
 
+function ZoomScroller:tapCallback(event)
+-- existing logic for handling taps...
+
+
+end
 
 function ZoomScroller:tapCallback(event)
     isPaused = nil
@@ -357,5 +364,15 @@ function ZoomScroller:tapCallback(event)
         tween.delay(0.8, function()
             moteTapped.defaultEmoji = originalEmoji
         end)
+    end
+    if moteTapped and not moteTapped.isAnimating then
+        moteTapped.tapCount = moteTapped.tapCount + 1
+        if moteTapped.tapCount == 2 then
+            moteTapped.state = "grrrr"
+            moteTapped.defaultEmoji = "😠"  -- Change to grrrr face
+        elseif moteTapped.tapCount == 3 then
+            -- Initiate rage mode behavior
+            moteTapped:startRageMode()
+        end
     end
 end

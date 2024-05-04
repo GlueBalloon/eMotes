@@ -27,6 +27,8 @@ function Mote:init(x, y)
     self.currentAffecting = {}
     self.affectedBy = {}  -- Table to keep track of affecting catalytes
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
+    self.tapCount = 0
+    self.velocityForRageMode = vec2(math.random(-1, 1) * 10, math.random(-1, 1) * 10)
 end
 
 function Mote:updateAppearance()
@@ -169,6 +171,229 @@ function Mote:drawFromParams()
         ellipse(x, y, size)
     end
     popStyle()
+end
+
+function Mote:startRageMode()
+    local mote = self -- Refers to the current mote instance
+    mote.state = "rage"
+    mote.isAnimating = true
+    local rageTime = 5  -- Duration of rage mode in seconds
+    local startTime = os.clock()  -- Capture the start time for rage mode
+    self.velocityForRageMode = vec2(math.random(-1, 1) * 7, math.random(-1, 1) * 7) 
+    
+    local function rageUpdate()
+        if os.clock() - startTime >= rageTime then
+            -- End rage mode
+            mote.state = "normal"
+            mote.tapCount = 0
+            mote.isAnimating = false
+            mote.emoji = mote.originalEmoji  -- Reset emoji
+            mote.velocityForRageMode = vec2(0, 0)  -- Stop moving
+            return
+        end
+        
+        -- Update mote position based on velocity
+        mote.position.x = mote.position.x + mote.velocityForRageMode.x
+        mote.position.y = mote.position.y + mote.velocityForRageMode.y
+        
+        -- Determine current grid cell and check for collisions
+        local neighbors = checkForNeighbors(mote, currentGrid)
+        for _, neighbor in ipairs(neighbors) do
+            if isColliding(mote, neighbor) then
+                -- Reflect the enraged mote's velocity
+                local dx = mote.position.x - neighbor.position.x
+                local dy = mote.position.y - neighbor.position.y
+                local angle = math.atan(dy, dx)
+                mote.velocityForRageMode = vec2(math.cos(angle), math.sin(angle)) * mote.velocityForRageMode:len()
+                
+                -- Apply a visual wobble to the neighbor
+                if neighbor.wobble then
+                    neighbor:wobble()
+                end
+            end
+        end
+        
+        -- Reschedule the update
+        tween.delay(0.05, rageUpdate)
+    end
+    
+    -- Start the first update
+    rageUpdate()
+end
+
+function Mote:startRageMode()
+    self:jitter(0.01, 3)  -- Jitter with magnitude of 5 for 0.5 seconds as a wind-up
+    
+    -- Delay the start of rage mode to allow for jitter
+    tween.delay(0.5, function()
+        local mote = self
+        mote.isAnimating = true
+        local rageTime = 5  -- Duration of rage mode in seconds
+        local startTime = os.clock()  -- Capture the start time for rage mode
+        
+        -- Assign random velocity after jitter
+        self.velocityForRageMode = vec2(math.random(-1, 1) * 7, math.random(-1, 1) * 7) 
+        
+        local function rageUpdate()
+            if os.clock() - startTime >= rageTime then
+                -- End rage mode
+                mote.state = "normal"
+                mote.tapCount = 0
+                mote.isAnimating = false
+                mote.emoji = mote.originalEmoji  -- Reset emoji
+                mote.velocityForRageMode = vec2(0, 0)  -- Stop moving
+                return
+            end
+            
+            -- Update mote position based on velocity
+            mote.position.x = mote.position.x + mote.velocityForRageMode.x
+            mote.position.y = mote.position.y + mote.velocityForRageMode.y
+            
+            -- Determine current grid cell and check for collisions
+            local neighbors = checkForNeighbors(mote, currentGrid)
+            for _, neighbor in ipairs(neighbors) do
+                if isColliding(mote, neighbor) then
+                    -- Reflect the enraged mote's velocity
+                    local dx = mote.position.x - neighbor.position.x
+                    local dy = mote.position.y - neighbor.position.y
+                    local angle = math.atan(dy, dx)
+                    mote.velocityForRageMode = vec2(math.cos(angle), math.sin(angle)) * mote.velocityForRageMode:len()
+                    
+                    -- Apply a visual wobble to the neighbor
+                    if neighbor.wobble then
+                        neighbor:wobble()
+                    end
+                end
+            end
+            -- Reschedule the update
+            tween.delay(0.05, rageUpdate)
+        end       
+        rageUpdate()  -- Start rage mode
+    end)
+end
+
+function Mote:startRageMode()
+    local mote = self --shortcut for adapting some GPT code
+    local jitterDuration = 1
+    self.velocityForRageMode = vec2(math.random(-1, 1) * 30, math.random(-1, 1) * 30) 
+    -- Start jitter as a buildup to rage mode
+    self:createChainedJitterSequence(jitterDuration, 1.25, 20, function()
+        -- After jitter completes, start the rage mode
+        self.isAnimating = true
+        self.velocityForRageMode = vec2(math.random(-5, 5), math.random(-5, 5))  -- Assign random velocity
+--        self.velocityForRageMode = vec2(math.random(-1, 1) * 1, math.random(-1, 1) * 1) 
+                
+        local rageTime = 8  -- Duration of rage mode in seconds
+        local startTime = os.clock() + jitterDuration -- Capture the start time for rage mode
+        
+        local function rageUpdate()
+                if os.clock() - startTime >= rageTime then
+                    -- End rage mode
+                    mote.state = "normal"
+                    mote.tapCount = 0
+                    mote.isAnimating = false
+                    mote.emoji = mote.originalEmoji  -- Reset emoji
+                    mote.velocityForRageMode = vec2(0, 0)  -- Stop moving
+                    return
+                end
+                
+                -- Update mote position based on velocity
+                mote.position.x = mote.position.x + mote.velocityForRageMode.x
+                mote.position.y = mote.position.y + mote.velocityForRageMode.y
+                
+                -- Determine current grid cell and check for collisions
+                local neighbors = checkForNeighbors(mote, currentGrid)
+                for _, neighbor in ipairs(neighbors) do
+                    if isColliding(mote, neighbor) then
+                        -- Reflect the enraged mote's velocity
+                        local dx = mote.position.x - neighbor.position.x
+                        local dy = mote.position.y - neighbor.position.y
+                        local angle = math.atan(dy, dx)
+                        mote.velocityForRageMode = vec2(math.cos(angle), math.sin(angle)) * mote.velocityForRageMode:len()
+                    end
+                end
+            self:handleCollisions()  -- Handle collisions
+            -- Schedule next update
+            if self.isAnimating then
+                tween.delay(0.05, rageUpdate)
+            end
+        end
+        
+        rageUpdate()
+    end)
+end
+
+
+function isColliding(mote1, mote2)
+    local dist = vec2(mote1.position.x - mote2.position.x, mote1.position.y - mote2.position.y)
+    return dist:len() <= (mote1.size / 2 + mote2.size / 2)
+end
+
+function Mote:createChainedJitterSequence(duration, intensity, numJitters, onComplete)
+    -- Store original position only once at the beginning of the sequence
+    local originalPosition = vec2(self.position.x, self.position.y)
+    
+    local function jitterStep(currentStep)
+        if currentStep > numJitters then
+            -- Ensure the mote returns to the original position at the end of the sequence
+            self.position = originalPosition
+            if onComplete then onComplete() end
+            return
+        end
+        
+        -- Apply jitter by setting a random offset from the original position
+        self.position = vec2(
+        originalPosition.x + (math.random() - 0.5) * 2 * intensity,
+        originalPosition.y + (math.random() - 0.5) * 2 * intensity
+        )
+        
+        -- Schedule the reset to original position
+        tween.delay(duration / numJitters, function()
+            self.position = originalPosition  -- Reset to original position after each jitter
+            
+            -- Delay before next jitter to make sure the reset is visible
+            tween.delay(duration / (numJitters * 2), function()
+                jitterStep(currentStep + 1)  -- Continue to the next jitter
+            end)
+        end)
+    end
+    
+    -- Start the jitter sequence
+    jitterStep(1)
+end
+
+function Mote:applyInstantVisualOffset(intensity)
+    self.originalPosition = vec2(self.position.x, self.position.y)  -- Save the original position
+    local randomOffset = vec2(
+    (math.random() - 0.5) * 2 * intensity, 
+    (math.random() - 0.5) * 2 * intensity
+    )
+    self.position = vec2(self.originalPosition.x + randomOffset.x, self.originalPosition.y + randomOffset.y)
+end
+
+function Mote:removeVisualOffset()
+    self.position = self.originalPosition  -- Reset to the original position
+end
+
+function Mote:handleCollisions()
+    local neighbors = checkForNeighbors(self, currentGrid)  -- Assuming this function returns nearby motes
+    for _, neighbor in ipairs(neighbors) do
+        if isColliding(self, neighbor) then
+            -- Reflect the enraged mote's velocity
+            local dx = self.position.x - neighbor.position.x
+            local dy = self.position.y - neighbor.position.y
+            local angle = math.atan(dy, dx)
+            self.velocity = vec2(math.cos(angle), math.sin(angle)) * self.velocity:len()
+            
+            -- Apply jitter effect to the neighbor mote as a reaction to collision
+            neighbor:createChainedJitterSequence(0.0051, 0.9, 5, function()
+                -- Optional callback if needed after jitter
+            end)
+            
+            -- Play collision sound, spatially adjusted
+          --  self:playSpatialSound("path/to/pinball_collision.wav")
+        end
+    end
 end
 
 
