@@ -1,23 +1,4 @@
-MOTE_SIZE = 4.25
-MOTE_COUNT = 3000
-TIMESCALE = 1
-WIND_ANGLE = 0
-MOTE_SPEED_DEFAULT = 0.1
-BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
-ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
--- Global variables
-motes = {}
-currentGrid = {}
-nextGrid = {}
-gridSize = 5  -- Adjust this value as needed
-zoomLevel = 1.0
-zoomOrigin = vec2(WIDTH / 2, HEIGHT / 2)
-emojiSize = BASE_EMOJI_SIZE
-lastTime = ElapsedTime
-frameCount = 0
-fps = 0
-motesDrawn = 0
-motesNotDrawn = 0
+
 
 -- Function to calculate appropriate text size for emotes
 function calculateTextSize()
@@ -43,7 +24,28 @@ end
 
 function setup()   
     bgImage = readImage(asset.builtin.Cargo_Bot.Game_Lower_BG)
-    
+    print("started")
+    if true then return end
+    MOTE_SIZE = 4.25
+    MOTE_COUNT = 3000
+    TIMESCALE = 1
+    WIND_ANGLE = 0
+    MOTE_SPEED_DEFAULT = 0.1
+    BASE_EMOJI_SIZE = MOTE_SIZE  -- Initial guess for text size
+    ZOOM_THRESHOLD = 1.7  -- Threshold for switching to emote drawing
+    -- Global variables
+    motes = {}
+    currentGrid = {}
+    nextGrid = {}
+    gridSize = 5  -- Adjust this value as needed
+    zoomLevel = 1.0
+    zoomOrigin = vec2(WIDTH / 2, HEIGHT / 2)
+    emojiSize = BASE_EMOJI_SIZE
+    lastTime = ElapsedTime
+    frameCount = 0
+    fps = 0
+    motesDrawn = 0
+    motesNotDrawn = 0
     zoomScroller = ZoomScroller()
     
     -- Setup sensor for pinch gestures

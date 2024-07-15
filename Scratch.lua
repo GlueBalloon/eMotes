@@ -152,7 +152,14 @@ function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progres
 end
 
 function draw()
+    pushStyle()
+    background(40, 40, 50)
+    spriteMode(CENTER)
     
+    tint(148, 162, 223)
+    sprite(bgImage, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
+    noTint()
+    if true then return end
     -- Update frame count
     frameCount = frameCount + 1
     if ElapsedTime - lastTime >= 1 then
@@ -172,13 +179,7 @@ function draw()
     end
     
     local frame = zoomScroller.frame
-    pushStyle()
-    background(40, 40, 50)
-    spriteMode(CENTER)
-    
-    tint(148, 162, 223)
-    sprite(bgImage, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
-    noTint()
+
     
     if zoomActive then
         zoomScroller:updateMapping(frame)
@@ -366,13 +367,24 @@ function ZoomScroller:tapCallback(event)
         end)
     end
     if moteTapped and not moteTapped.isAnimating then
-        moteTapped.tapCount = moteTapped.tapCount + 1
-        if moteTapped.tapCount == 2 then
+        -- Update or reset tap count based on the time elapsed since the last tap
+        if moteTapped.lastTapTime ~= 0 and (ElapsedTime - moteTapped.lastTapTime < 1.5) then
+            moteTapped.tapCount = moteTapped.tapCount + 1
+        else
+            moteTapped.tapCount = 1  -- Reset tap count if too much time has passed
+        end
+        
+        moteTapped.lastTapTime = ElapsedTime  -- Update the last tap time to the current time
+        
+        -- Check tap count thresholds for different states or actions
+        if moteTapped.tapCount == 3 then
             moteTapped.state = "grrrr"
-            moteTapped.defaultEmoji = "😠"  -- Change to grrrr face
-        elseif moteTapped.tapCount == 3 then
-            -- Initiate rage mode behavior
+            moteTapped.emoji = "😠"  -- Change to grrrr face
+        elseif moteTapped.tapCount >= 4 then
+            -- Initiate rage mode behavior when tap count reaches or exceeds 3
+            moteTapped.state = "rage"
             moteTapped:startRageMode()
+            moteTapped.tapCount = 0  -- Optionally reset tap count after triggering rage mode
         end
     end
 end

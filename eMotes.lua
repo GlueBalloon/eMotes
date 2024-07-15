@@ -28,6 +28,7 @@ function Mote:init(x, y)
     self.affectedBy = {}  -- Table to keep track of affecting catalytes
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
     self.tapCount = 0
+    self.lastTapTime = 0
     self.velocityForRageMode = vec2(math.random(-1, 1) * 10, math.random(-1, 1) * 10)
 end
 
@@ -40,6 +41,16 @@ function Mote:updateAppearance()
     elseif self.state == "cold" then
         self.emoji = "🥶"
         self.color = color(90, 183, 224) -- Cold color
+    elseif self.state == "rage" then
+        local rand = math.random(3)
+        if rand == 1 then
+            self.emoji = "😡"
+        elseif rand == 2 then
+            self.emoji = "😤"
+        else
+            self.emoji = "🤬"
+        end
+        self.color = self.defaultColor -- Normal color
     else
         self.emoji = self.defaultEmoji
         self.color = self.defaultColor -- Normal color
