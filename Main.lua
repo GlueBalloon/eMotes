@@ -22,8 +22,19 @@ function calculateTextSize()
     emojiSize = BASE_EMOJI_SIZE
 end
 
+function startScreen()
+    background(40, 40, 50)
+    fill(255)
+    fontSize(40)
+    text("Tap to Start", WIDTH/2, HEIGHT/2)
+end
+
 function setup() 
-    testing = false
+end
+
+function setupFromStartScreen()
+
+    testing = true
     if testing then
         doubleTapCallbackTest()
         return
@@ -185,11 +196,20 @@ function updateGrid(mote, grid)
 end
 
 function touched(touch)
+    if not appStarted then
+        if touch.state == ENDED then
+            appStarted = true
+            setupFromStartScreen()
+        end
+    end    
     if testing then return end
-    sensor:touched(touch)
-    if touch.state == ENDED or touch.state == CANCELLED then 
-        zoomScroller.isZooming = false
-        zoomScroller.isDragging = false
+    if sensor then
+        sensor:touched(touch)
+        if touch.state == ENDED or touch.state == CANCELLED then 
+            zoomScroller.isZooming = false
+            zoomScroller.isDragging = false
+        end
+        return
     end
 end
 
@@ -322,6 +342,12 @@ trailLength = 100
 
         
         function draw()
+    
+    if not appStarted then
+        startScreen()
+        return
+    end
+    
             pushStyle()
             background(40, 40, 50)
             spriteMode(CENTER)
