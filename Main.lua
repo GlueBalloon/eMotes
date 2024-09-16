@@ -32,14 +32,7 @@ end
 function setup() 
 end
 
-function setupFromStartScreen()
-
-    testing = true
-    if testing then
-        doubleTapCallbackTest()
-        return
-    end
-    
+function setupFromStartScreen()   
       
     bgImage = readImage(asset.builtin.Cargo_Bot.Game_Lower_BG)
     print("started")
@@ -63,6 +56,17 @@ function setupFromStartScreen()
     fps = 0
     motesDrawn = 0
     motesNotDrawn = 0
+    
+    testing = true
+    if testing then
+        doubleTapCallbackTest()
+        return
+    end
+    
+    
+    
+    
+    
     zoomScroller = ZoomScroller()
     
     -- Setup sensor for pinch gestures
