@@ -25,7 +25,6 @@ end
 function setup()   
     bgImage = readImage(asset.builtin.Cargo_Bot.Game_Lower_BG)
     print("started")
-    if true then return end
     MOTE_SIZE = 4.25
     MOTE_COUNT = 3000
     TIMESCALE = 1
