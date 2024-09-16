@@ -1,5 +1,3 @@
-
-
 ZoomScroller = class()
 
 function ZoomScroller:init(anImage, x, y, width, height)
@@ -125,11 +123,6 @@ function ZoomScroller:dragCallback(event)
         -- Reset last touch point on release or cancellation of touch
         self.frame.lastTouchPoint = nil
     end
-end
-
-
-function ZoomScroller:tapCallback(event)
-    self.trackedMote = nil
 end
 
 function ZoomScroller:doubleTapCallback(event)
@@ -479,19 +472,6 @@ function ZoomScroller:drawSurpriseLines(mote, baseLineLength, lineWidth, progres
     end
     
     popStyle()
-end
-
-
-function ZoomScroller:longPressCallback(event)
-    isPaused = { forRecording = true }
-    local moteTapped = self:detectMoteUnderTouch(event)
-    if moteTapped then
-        -- Set the app to a paused state specifically for recording
-        print("Long-pressed on mote for recording:", moteTapped.emoji or "no emoji", "at:", moteTapped.position.x, moteTapped.position.y)
-        -- Additional logic for showing recording UI and handling recording can be added here
-    else
-        --   isPaused = nil
-    end
 end
 
 function ZoomScroller:detectMoteUnderTouch(event)

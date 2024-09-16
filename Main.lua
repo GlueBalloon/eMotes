@@ -62,9 +62,6 @@ function setup()
     sensor:onDoubleTap(function(event)
         zoomScroller:doubleTapCallback(event)
     end)
-    sensor:onLongPress(function(event) 
-    zoomScroller:longPressCallback(event) 
-    end)
     sensor.debug = true
     
     calculateTextSize()
