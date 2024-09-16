@@ -22,7 +22,14 @@ function calculateTextSize()
     emojiSize = BASE_EMOJI_SIZE
 end
 
-function setup()   
+function setup() 
+    testing = true
+    if testing then
+        doubleTapCallbackTest()
+        return
+    end
+    
+      
     bgImage = readImage(asset.builtin.Cargo_Bot.Game_Lower_BG)
     print("started")
     MOTE_SIZE = 4.25
@@ -178,6 +185,7 @@ function updateGrid(mote, grid)
 end
 
 function touched(touch)
+    if testing then return end
     sensor:touched(touch)
     if touch.state == ENDED or touch.state == CANCELLED then 
         zoomScroller.isZooming = false
@@ -310,6 +318,13 @@ end
 
 dotPositions = {}
 trailLength = 100
+
+
+
+
+
+
+
 
 function highlightTrackedMote(mote)
     -- Update elapsed time

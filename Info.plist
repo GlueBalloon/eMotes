@@ -12,6 +12,8 @@
 		<string>Scratch</string>
 		<string>Reference</string>
 		<string>eMoteReactions</string>
+		<string>GestureHandler</string>
+		<string>GPT_tests</string>
 	</array>
 </dict>
 </plist>
