@@ -27,9 +27,22 @@ function startScreen()
     fill(255)
     fontSize(40)
     text("Tap to Start", WIDTH/2, HEIGHT/2)
+    drawFloatingDots()
+end
+
+function drawFloatingDots()
+    for _, floatingDot in ipairs(floatingDots) do
+        floatingDot:update()
+        floatingDot:draw()
+    end
 end
 
 function setup() 
+    -- Initialize and update floatingDots
+    floatingDots = {}
+    for i = 1, 50 do
+        table.insert(floatingDots, Sparkle())
+    end
 end
 
 function setupFromStartScreen()   
@@ -203,6 +216,7 @@ function touched(touch)
     if not appStarted then
         if touch.state == ENDED then
             appStarted = true
+            floatingDots = {}
             setupFromStartScreen()
         end
     end    

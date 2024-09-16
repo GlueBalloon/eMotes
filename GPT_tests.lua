@@ -1,3 +1,7 @@
+function testprint(str)
+    print(str)
+end
+
 -- Test Script for ZoomScroller:doubleTapCallback
 
 -- Assume ZoomScroller and Mote classes are already defined and available
@@ -8,6 +12,36 @@ function doubleTapCallbackTest()
     
     -- Initialize ZoomScroller
     zoomScroller = ZoomScroller(readImage(asset.builtin.Cargo_Bot.Game_Lower_BG), WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
+    
+    function testAbsolutePositionPredicting()
+        -- Define input coordinates and expected outputs
+        local inputX, inputY = 100, 100
+        local expectedX, expectedY = 150, 150
+        
+        -- Set up zoomMapping to scale coordinates by 1.5
+        zoomScroller.zoomMapping = {
+            {
+                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},
+                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}
+            }
+        }
+        
+        -- Call the function and capture its return values
+        local resultX, resultY = zoomScroller:zoomedPosToAbsolutePos(inputX, inputY)
+       
+         -- Floor the returned values
+        resultX = math.floor(resultX)
+        resultY = math.floor(resultY)
+    
+        -- Compare the returned values to the expected values and report the result
+        if resultX == expectedX and resultY == expectedY then
+            print("Test Passed: Expected values (" .. expectedX .. ", " .. expectedY .. ") were correctly returned by zoomedPosToAbsolutePos.")
+        else
+            print("Test Failed: Expected (" .. expectedX .. ", " .. expectedY .. ") but got (" .. tostring(resultX) .. ", " .. tostring(resultY) .. ")")
+        end
+    end
+    
+    testAbsolutePositionPredicting()
     
     -- Initialize test motes
     motes = {}
@@ -44,16 +78,38 @@ function doubleTapCallbackTest()
         zoomScroller:doubleTapCallback(event)
     end
     
-    -- Test Case 1: Double-tap on Mote 1
-    simulateDoubleTap(100, 100)
-    if zoomScroller.trackedMote == motes[1] then
-        print("Test Case 1 Passed: Mote 1 correctly tracked.")
-    else
-        print("Test Case 1 Failed: Mote 1 not tracked as expected.")
+    -- Test Case 1: Double-tap on Mote 1    
+    function testDoubleTapDetectsCorrectMote()
+        -- Simulate double-tap on Mote 1
+        simulateDoubleTap(100, 100)
+        
+        -- Check if the correct mote is detected
+        if zoomScroller:detectMoteUnderTouch({x = 100, y = 100}) == motes[1] then
+            print("Test Case 1a Passed: Mote 1 correctly detected.")
+        else
+            print("Test Case 1a Failed: Mote 1 not detected as expected.")
+        end
+        
+        -- Reset trackedMote
+        zoomScroller.trackedMote = nil
+    end
+    function testDoubleTapAssignsTrackedMote()
+        -- Simulate double-tap on Mote 1
+        simulateDoubleTap(100, 100)
+        
+        -- Check if trackedMote is set correctly
+        if zoomScroller.trackedMote == motes[1] then
+            print("Test Case 1b Passed: trackedMote correctly set to Mote 1.")
+        else
+            print("Test Case 1b Failed: trackedMote not set correctly.")
+        end
+        
+        -- Reset trackedMote
+        zoomScroller.trackedMote = nil
     end
     
-    -- Reset trackedMote
-    zoomScroller.trackedMote = nil
+    testDoubleTapDetectsCorrectMote()
+    testDoubleTapAssignsTrackedMote()
     
     -- Test Case 2: Double-tap on Mote 2
     simulateDoubleTap(200, 200)
