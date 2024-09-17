@@ -46,7 +46,6 @@ function setup()
 end
 
 function setupFromStartScreen()   
-      
     bgImage = readImage(asset.builtin.Cargo_Bot.Game_Lower_BG)
     print("started")
     MOTE_SIZE = 4.25
@@ -70,7 +69,7 @@ function setupFromStartScreen()
     motesDrawn = 0
     motesNotDrawn = 0
     
-    testing = true
+    testing = false
     if testing then
         doubleTapCallbackTest()
         return
