@@ -13,6 +13,11 @@ function doubleTapCallbackTest()
     -- Initialize ZoomScroller
     zoomScroller = ZoomScroller(readImage(asset.builtin.Cargo_Bot.Game_Lower_BG), WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
     
+    -- Make callback generic so it's easy to replace
+    local callback = function(event)
+        zoomScroller:doubleTapCallback(event)
+    end
+    
     function predictAbsoluteFramePosition(onscreenZoomedX, onscreenZoomedY, zoomMapping)
         local mapping = zoomMapping[1]  -- Assume we're working with the first mapping for simplicity
         local absolutePositionInFrameBounds = mapping.absoluteSourceBounds  -- The frame bounds, where "absolute" refers to the larger world frame
@@ -169,8 +174,7 @@ function doubleTapCallbackTest()
         -- Create and place three motes with absolute positions
         table.insert(motes, Mote(100, 100)) -- Mote 1
         motes[1].drawingParams = zoomScroller:getDrawingParameters(motes[1].position, motes[1].size)
-        print("motes[1].drawingParams.x: ", motes[1].drawingParams.x)
-        
+       
         table.insert(motes, Mote(200, 200)) -- Mote 2
         motes[2].drawingParams = zoomScroller:getDrawingParameters(motes[2].position, motes[2].size)
         
@@ -186,7 +190,8 @@ function doubleTapCallbackTest()
         
         return motes
     end
-        
+    local motes = setupMotesAndGrid()
+    
     -- Function to simulate a double-tap event at a zoomed screen position
     local function simulateDoubleTap(screenX, screenY)
         local event = {
@@ -197,14 +202,11 @@ function doubleTapCallbackTest()
                 {x = screenX, y = screenY, prevX = screenX, prevY = screenY, state = BEGAN}
             }
         }
-        zoomScroller:doubleTapCallback(event)
+        callback(event)
     end
         
     -- Test Case: Double-tap to detect Mote 1
     function testDoubleTapDetectsCorrectMote()
-        -- Setup motes and grid
-        local motes = setupMotesAndGrid()
-        
         -- Convert mote's absolute position to zoomed screen coordinates using the zoom mapping
         local zoomMapping = zoomScroller.zoomMapping[1]  -- Use the first zoom mapping
         local absFrameBounds = zoomMapping.absoluteSourceBounds
@@ -219,9 +221,6 @@ function doubleTapCallbackTest()
         -- Simulate double-tap on the converted screen coordinates
         simulateDoubleTap(screenX, screenY)
         
-        print("motes[1].position: ", motes[1].position)
-        print("screenX, screenY: ", screenX, ", ", screenY)
-        
         -- Detect if the correct mote is selected based on the touch coordinates
         local detectedMote = zoomScroller:detectMoteUnderTouch(vec2(screenX, screenY))
         
@@ -234,30 +233,21 @@ function doubleTapCallbackTest()
         
         -- Reset trackedMote for the next test
         zoomScroller.trackedMote = nil
+        
+        -- Simulate double-tap on Mote 1
+        simulateDoubleTap(screenX, screenY)
+        
+        -- Check if trackedMote is set correctly
+        if zoomScroller.trackedMote == motes[1] then
+            print("Test Case Passed: trackedMote correctly set to Mote 1.")
+        else
+            print("Test Case Failed: trackedMote not set correctly.")
+        end
     end
         
     testDoubleTapDetectsCorrectMote()
         
-    if true then return end
-        
-        
-    function testDoubleTapAssignsTrackedMote()
-    -- Simulate double-tap on Mote 1
-    simulateDoubleTap(100, 100)
-        
-    -- Check if trackedMote is set correctly
-    if zoomScroller.trackedMote == motes[1] then
-    print("Test Case 1b Passed: trackedMote correctly set to Mote 1.")
-    else
-    print("Test Case 1b Failed: trackedMote not set correctly.")
-    end
-        
-    -- Reset trackedMote
-    zoomScroller.trackedMote = nil
-    end
-        
-        
-    testDoubleTapAssignsTrackedMote()
+if true then return end
         
     -- Test Case 2: Double-tap on Mote 2
     simulateDoubleTap(200, 200)
