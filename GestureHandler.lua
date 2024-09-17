@@ -6,7 +6,6 @@ function ZoomScroller:doubleTapCallback(event)
     -- Convert the zoomed position to an absolute position
     local absX, absY = self:zoomedPosToAbsolutePos(event.x, event.y)
     if not absX or not absY then return end -- Early exit if conversion failed
-    if true then return end 
     -- Calculate the grid cell coordinates
     local gridX = math.floor(absX / gridSize) + 1
     local gridY = math.floor(absY / gridSize) + 1
