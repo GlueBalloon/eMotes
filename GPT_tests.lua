@@ -155,17 +155,6 @@ function doubleTapCallbackTest()
           
     -- Setup function to initialize motes and place them in the grid
     function setupMotesAndGrid()
-        motes = {}
-        
-        -- Create and place three motes with absolute positions
-        table.insert(motes, Mote(100, 100)) -- Mote 1
-        motes[1].drawingParams = {x = 100, y = 100, size = 20}
-        
-        table.insert(motes, Mote(200, 200)) -- Mote 2
-        motes[2].drawingParams = {x = 200, y = 200, size = 20}
-        
-        table.insert(motes, Mote(300, 300)) -- Mote 3
-        motes[3].drawingParams = {x = 300, y = 300, size = 20}
         
         -- Set up the zoomMapping for the screen
         zoomScroller.zoomMapping = {
@@ -175,22 +164,37 @@ function doubleTapCallbackTest()
             }
         }
         
+        local motes = {}
+        
+        -- Create and place three motes with absolute positions
+        table.insert(motes, Mote(100, 100)) -- Mote 1
+        motes[1].drawingParams = zoomScroller:getDrawingParameters(motes[1].position, motes[1].size)
+        print("motes[1].drawingParams.x: ", motes[1].drawingParams.x)
+        
+        table.insert(motes, Mote(200, 200)) -- Mote 2
+        motes[2].drawingParams = zoomScroller:getDrawingParameters(motes[2].position, motes[2].size)
+        
+        table.insert(motes, Mote(300, 300)) -- Mote 3
+        motes[3].drawingParams = zoomScroller:getDrawingParameters(motes[3].position, motes[3].size)
+             
         -- Populate the grid
         currentGrid = {}
         gridSize = 50
         for _, mote in ipairs(motes) do
             putMoteInGrid(mote, gridSize, currentGrid)
         end
+        
+        return motes
     end
         
     -- Function to simulate a double-tap event at a zoomed screen position
-    local function simulateDoubleTap(onscreenZoomedX, onscreenZoomedY)
+    local function simulateDoubleTap(screenX, screenY)
         local event = {
-            x = onscreenZoomedX,
-            y = onscreenZoomedY,
+            x = screenX,
+            y = screenY,
             touches = {
-                {x = onscreenZoomedX, y = onscreenZoomedY, prevX = onscreenZoomedX, prevY = onscreenZoomedY, state = BEGAN},
-                {x = onscreenZoomedX, y = onscreenZoomedY, prevX = onscreenZoomedX, prevY = onscreenZoomedY, state = BEGAN}
+                {x = screenX, y = screenY, prevX = screenX, prevY = screenY, state = BEGAN},
+                {x = screenX, y = screenY, prevX = screenX, prevY = screenY, state = BEGAN}
             }
         }
         zoomScroller:doubleTapCallback(event)
@@ -199,13 +203,27 @@ function doubleTapCallbackTest()
     -- Test Case: Double-tap to detect Mote 1
     function testDoubleTapDetectsCorrectMote()
         -- Setup motes and grid
-        setupMotesAndGrid()
+        local motes = setupMotesAndGrid()
         
-        -- Simulate double-tap on Mote 1's screen coordinates
-        simulateDoubleTap(100, 100)
+        -- Convert mote's absolute position to zoomed screen coordinates using the zoom mapping
+        local zoomMapping = zoomScroller.zoomMapping[1]  -- Use the first zoom mapping
+        local absFrameBounds = zoomMapping.absoluteSourceBounds
+        local screenZoomBounds = zoomMapping.zoomedSectionBounds
+        
+        -- Calculate the screen zoomed coordinates based on the absolute position
+        local xRatio = (motes[1].position.x - absFrameBounds.left) / absFrameBounds.width
+        local yRatio = (motes[1].position.y - absFrameBounds.bottom) / absFrameBounds.height
+        local screenX = screenZoomBounds.left + xRatio * screenZoomBounds.width
+        local screenY = screenZoomBounds.bottom + yRatio * screenZoomBounds.height
+        
+        -- Simulate double-tap on the converted screen coordinates
+        simulateDoubleTap(screenX, screenY)
+        
+        print("motes[1].position: ", motes[1].position)
+        print("screenX, screenY: ", screenX, ", ", screenY)
         
         -- Detect if the correct mote is selected based on the touch coordinates
-        local detectedMote = zoomScroller:detectMoteUnderTouch({x = 100, y = 100})
+        local detectedMote = zoomScroller:detectMoteUnderTouch(vec2(screenX, screenY))
         
         -- Check if the correct mote was detected
         if detectedMote == motes[1] then
@@ -220,7 +238,7 @@ function doubleTapCallbackTest()
         
     testDoubleTapDetectsCorrectMote()
         
-        if true then return end
+    if true then return end
         
         
     function testDoubleTapAssignsTrackedMote()

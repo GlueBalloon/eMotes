@@ -2,7 +2,7 @@
     --to be refactored into a gesture handler soon
     
 function ZoomScroller:doubleTapCallback(event)
-    testprint("doubleTapCallback called")
+    testprint("doubleTapCallback called: ", event.x, ", ", event.y)
     -- Convert the zoomed position to an absolute position
     local absX, absY = self:zoomedPosToAbsolutePos(event.x, event.y)
     if not absX or not absY then return end -- Early exit if conversion failed

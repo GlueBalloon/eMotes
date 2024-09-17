@@ -293,17 +293,17 @@ function ZoomScroller:zoomedPosToAbsolutePos(x, y)
     return nil, nil
 end
 
-function ZoomScroller:getZoomedPosition(original)
+function ZoomScroller:getZoomedPosition(absoluteFramePosition)
     -- Calculate ratios based on original screen dimensions
-    local ratioX = original.x / WIDTH
-    local ratioY = original.y / HEIGHT
+    local ratioX = absoluteFramePosition.x / WIDTH
+    local ratioY = absoluteFramePosition.y / HEIGHT
     
     -- Apply these ratios to the frame's current state
     -- Note: This assumes the frame's x and y represent the center of the zoomed area
-    local zoomedX = self.frame.x + (ratioX - 0.5) * self.frame.width
-    local zoomedY = self.frame.y + (ratioY - 0.5) * self.frame.height
+    local screenZoomedX = self.frame.x + (ratioX - 0.5) * self.frame.width
+    local screenZoomedY = self.frame.y + (ratioY - 0.5) * self.frame.height
     
-    return vec2(zoomedX, zoomedY)
+    return vec2(screenZoomedX, screenZoomedY)
 end
 
 function ZoomScroller:followTrackedMote()
