@@ -6,6 +6,18 @@
 
 
 categories = {
+    GRRRR = {
+        emojis = {"😠"},
+        sounds = {
+            asset.documents.eMotes.Confrontational_Sounds["angry-rummmble.wav"]
+        } 
+    }, 
+    Rage = {
+        emojis = {"🤬"},
+        sounds = {
+            asset.documents.eMotes.Confrontational_Sounds["angry-rummmble.wav"]
+        } 
+    }, 
     HappyJoyful = {
         emojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", "😉", "😌", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "😍", "🥳", "😻"},
         sounds = {asset.documents.eMotes.Joyful_Sounds.baby_laugh,

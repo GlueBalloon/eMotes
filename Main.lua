@@ -67,22 +67,10 @@ function setupFromStartScreen()
     frameCount = 0
     fps = 0
     motesDrawn = 0
-    motesNotDrawn = 0
-    
-    
-    
-    
-    testing = true
-    if testing then
-        doubleTapCallbackTest()
-        return
-    end
-    
-    
-    
-    
+    motesNotDrawn = 0    
     
     zoomScroller = ZoomScroller()
+    gestHandler = MotesGestureHandler(zoomScroller)
     
     -- Setup sensor for pinch gestures
     screen = {x=0, y=0, w=WIDTH, h=HEIGHT}
@@ -97,9 +85,15 @@ function setupFromStartScreen()
         zoomScroller:tapCallback(event)
     end)
     sensor:onDoubleTap(function(event)
-        zoomScroller:doubleTapCallback(event)
+        gestHandler:doubleTapCallback(event)
     end)
     sensor.debug = true
+    
+    testing = false
+    if testing then
+        doubleTapCallbackTest()
+        return
+    end
     
     calculateTextSize()
     

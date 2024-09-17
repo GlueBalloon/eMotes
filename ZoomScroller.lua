@@ -526,8 +526,21 @@ function ZoomScroller:tapCallback(event)
         if moteTapped.emoji == "🥶" then category = "TooCold"
         elseif moteTapped.emoji == "🥵" then category = "TooHot" end
         
+        -- Check tap count thresholds for different states or actions
+        if moteTapped.tapCount == 2 then
+            moteTapped.state = "grrrr"
+            category = "GRRRR"
+        elseif moteTapped.tapCount >= 3 then
+            -- Initiate rage mode behavior when tap count reaches or exceeds 3
+            moteTapped.state = "rage"
+            category = "Rage"
+        end
+        
+        
         local newEmoji, soundPath = pickEmojiAndSound(category) -- Assuming this function is globally available
         moteTapped.defaultEmoji = newEmoji -- Temporarily change to a new emoji
+        
+
         
         -- Play the sound with pitch variation
         if soundPath then
@@ -543,7 +556,7 @@ function ZoomScroller:tapCallback(event)
     end
     if moteTapped and not moteTapped.isAnimating then
         -- Update or reset tap count based on the time elapsed since the last tap
-        if moteTapped.lastTapTime ~= 0 and (ElapsedTime - moteTapped.lastTapTime < 1.5) then
+        if moteTapped.lastTapTime ~= 0 and (ElapsedTime - moteTapped.lastTapTime < 3.5) then
             moteTapped.tapCount = moteTapped.tapCount + 1
         else
             moteTapped.tapCount = 1  -- Reset tap count if too much time has passed
@@ -551,12 +564,8 @@ function ZoomScroller:tapCallback(event)
         
         moteTapped.lastTapTime = ElapsedTime  -- Update the last tap time to the current time
         
-        -- Check tap count thresholds for different states or actions
-        if moteTapped.tapCount == 3 then
-            moteTapped.state = "grrrr"
-            moteTapped.emoji = "😠"  -- Change to grrrr face
-        elseif moteTapped.tapCount >= 4 then
-            -- Initiate rage mode behavior when tap count reaches or exceeds 3
+        -- Check tap count threshold for rage
+        if moteTapped.tapCount >= 3 then
             moteTapped.state = "rage"
             moteTapped:startRageMode()
             moteTapped.tapCount = 0  -- Optionally reset tap count after triggering rage mode

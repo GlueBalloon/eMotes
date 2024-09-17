@@ -1,23 +1,8 @@
 function testprint(str)
-print(str)
+    print(str)
 end
 
--- Test Script for ZoomScroller:doubleTapCallback
-
--- Assume ZoomScroller and Mote classes are already defined and available
-function doubleTapCallbackTest()
-    -- Test Script for ZoomScroller:doubleTapCallback
-    
-    -- Assume ZoomScroller and Mote classes are already defined and available
-    
-    -- Initialize ZoomScroller
-    zoomScroller = ZoomScroller(readImage(asset.builtin.Cargo_Bot.Game_Lower_BG), WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
-    
-    -- Make callback generic so it's easy to replace
-    local callback = function(event)
-        zoomScroller:doubleTapCallback(event)
-    end
-    
+function doubleTapCallbackTest()    
     function predictAbsoluteFramePosition(onscreenZoomedX, onscreenZoomedY, zoomMapping)
         local mapping = zoomMapping[1]  -- Assume we're working with the first mapping for simplicity
         local absolutePositionInFrameBounds = mapping.absoluteSourceBounds  -- The frame bounds, where "absolute" refers to the larger world frame
@@ -192,19 +177,21 @@ function doubleTapCallbackTest()
     end
     local motes = setupMotesAndGrid()
     
-    -- Function to simulate a double-tap event at a zoomed screen position
-    local function simulateDoubleTap(screenX, screenY)
-        local event = {
+    -- Function to simulate a double-tap event routed through the Sensor
+    function simulateDoubleTapWithSensor(screenX, screenY)
+        -- Create the first tap event (BEGAN state)
+        local tapEvent = {
+            state = ENDED, -- This state is needed for a double-tap to be recognized
+            tapCount = 2,  -- Double-tap
             x = screenX,
             y = screenY,
-            touches = {
-                {x = screenX, y = screenY, prevX = screenX, prevY = screenY, state = BEGAN},
-                {x = screenX, y = screenY, prevX = screenX, prevY = screenY, state = BEGAN}
-            }
+            id = 0000000
         }
-        callback(event)
-    end
         
+        -- Send the touch event to the sensor
+        sensor:touched(tapEvent)
+    end
+    
     -- Test Case: Double-tap to detect Mote 1
     function testDoubleTapDetectsCorrectMote()
         -- Convert mote's absolute position to zoomed screen coordinates using the zoom mapping
@@ -219,7 +206,7 @@ function doubleTapCallbackTest()
         local screenY = screenZoomBounds.bottom + yRatio * screenZoomBounds.height
         
         -- Simulate double-tap on the converted screen coordinates
-        simulateDoubleTap(screenX, screenY)
+        simulateDoubleTapWithSensor(screenX, screenY)
         
         -- Detect if the correct mote is selected based on the touch coordinates
         local detectedMote = zoomScroller:detectMoteUnderTouch(vec2(screenX, screenY))
@@ -235,7 +222,7 @@ function doubleTapCallbackTest()
         zoomScroller.trackedMote = nil
         
         -- Simulate double-tap on Mote 1
-        simulateDoubleTap(screenX, screenY)
+        simulateDoubleTapWithSensor(screenX, screenY)
         
         -- Check if trackedMote is set correctly
         if zoomScroller.trackedMote == motes[1] then
@@ -246,44 +233,6 @@ function doubleTapCallbackTest()
     end
         
     testDoubleTapDetectsCorrectMote()
-        
-if true then return end
-        
-    -- Test Case 2: Double-tap on Mote 2
-    simulateDoubleTap(200, 200)
-    if zoomScroller.trackedMote == motes[2] then
-    print("Test Case 2 Passed: Mote 2 correctly tracked.")
-    else
-    print("Test Case 2 Failed: Mote 2 not tracked as expected.")
-    end
-        
-    -- Reset trackedMote
-    zoomScroller.trackedMote = nil
-        
-    -- Test Case 3: Double-tap on empty space
-    simulateDoubleTap(400, 400)
-    if zoomScroller.trackedMote == nil then
-    print("Test Case 3 Passed: No mote tracked when tapping empty space.")
-    else
-    print("Test Case 3 Failed: Unexpected mote tracked.")
-    end
-        
-    -- Test Case 4: Double-tap overlapping multiple motes
-    -- Adding overlapping mote
-    table.insert(motes, Mote(100, 100))
-    motes[4].drawingParams = {x = 100, y = 100, size = 20}
-    table.insert(currentGrid[math.floor(100 / gridSize) + 1][math.floor(100 / gridSize) + 1], motes[4])
-        
-    simulateDoubleTap(100, 100)
-    if zoomScroller.trackedMote == motes[1] or zoomScroller.trackedMote == motes[4] then
-    print("Test Case 4 Passed: One of the overlapping motes correctly tracked.")
-    else
-    print("Test Case 4 Failed: Overlapping motes not tracked as expected.")
-    end
-        
-    -- Cleanup: Remove the overlapping mote
-    table.remove(motes, 4)
-    currentGrid[math.floor(100 / gridSize) + 1][math.floor(100 / gridSize) + 1] = {motes[1]}
 end
         
         
