@@ -524,23 +524,21 @@ function ZoomScroller:tapCallback(event)
         local originalEmoji = moteTapped.defaultEmoji
         -- Force category if special-case emoji
         if moteTapped.emoji == "🥶" then category = "TooCold"
-        elseif moteTapped.emoji == "🥵" then category = "TooHot" end
+        elseif moteTapped.emoji == "🥵" then category = "TooHot" end       
+        
+        local newEmoji, soundPath = pickEmojiAndSound(category) -- Assuming this function is globally available
         
         -- Check tap count thresholds for different states or actions
         if moteTapped.tapCount == 2 then
             moteTapped.state = "grrrr"
-            category = "GRRRR"
+            newEmoji, soundPath = "😠", asset.documents.eMotes.Confrontational_Sounds["angry-rummmble.wav"]
         elseif moteTapped.tapCount >= 3 then
             -- Initiate rage mode behavior when tap count reaches or exceeds 3
             moteTapped.state = "rage"
-            category = "Rage"
+            newEmoji, soundPath = "🤬", asset.documents.eMotes.Confrontational_Sounds["angry-rummmble.wav"]
         end
         
-        
-        local newEmoji, soundPath = pickEmojiAndSound(category) -- Assuming this function is globally available
         moteTapped.defaultEmoji = newEmoji -- Temporarily change to a new emoji
-        
-
         
         -- Play the sound with pitch variation
         if soundPath then
@@ -551,12 +549,14 @@ function ZoomScroller:tapCallback(event)
         
         -- Schedule to change back after a delay
         tween.delay(0.8, function()
-            moteTapped.defaultEmoji = originalEmoji
+            if math.random() > 0.5 then
+                moteTapped.defaultEmoji = originalEmoji
+            end
         end)
     end
     if moteTapped and not moteTapped.isAnimating then
         -- Update or reset tap count based on the time elapsed since the last tap
-        if moteTapped.lastTapTime ~= 0 and (ElapsedTime - moteTapped.lastTapTime < 3.5) then
+        if moteTapped.lastTapTime ~= 0 and (ElapsedTime - moteTapped.lastTapTime < 3) then
             moteTapped.tapCount = moteTapped.tapCount + 1
         else
             moteTapped.tapCount = 1  -- Reset tap count if too much time has passed
@@ -566,7 +566,6 @@ function ZoomScroller:tapCallback(event)
         
         -- Check tap count threshold for rage
         if moteTapped.tapCount >= 3 then
-            moteTapped.state = "rage"
             moteTapped:startRageMode()
             moteTapped.tapCount = 0  -- Optionally reset tap count after triggering rage mode
         end
