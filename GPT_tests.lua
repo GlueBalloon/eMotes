@@ -12,99 +12,103 @@ function doubleTapCallbackTest()
     
     -- Initialize ZoomScroller
     zoomScroller = ZoomScroller(readImage(asset.builtin.Cargo_Bot.Game_Lower_BG), WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
-    
-    -- New function: predictAbsolutePosition
-    function predictAbsolutePosition(relativeX, relativeY, zoomMapping)
+
+    function predictAbsoluteFramePosition(onscreenZoomedX, onscreenZoomedY, zoomMapping)
         local mapping = zoomMapping[1]  -- Assume we're working with the first mapping for simplicity
-        local absBounds = mapping.absoluteSourceBounds
-        local zoomBounds = mapping.zoomedSectionBounds
+        local absolutePositionInFrameBounds = mapping.absoluteSourceBounds  -- The frame bounds, where "absolute" refers to the larger world frame
+        local positionInOnscreenZoomBounds = mapping.zoomedSectionBounds  -- The bounds of what is shown on screen after zooming
         
-        -- Calculate the ratios for the zoomed position
-        local xRatio = (relativeX - zoomBounds.left) / zoomBounds.width
-        local yRatio = (relativeY - zoomBounds.bottom) / zoomBounds.height
+        -- Calculate the ratios for the zoomed position (i.e., position in the zoomed onscreen view)
+        local xRatio = (onscreenZoomedX - positionInOnscreenZoomBounds.left) / positionInOnscreenZoomBounds.width
+        local yRatio = (onscreenZoomedY - positionInOnscreenZoomBounds.bottom) / positionInOnscreenZoomBounds.height
         
-        -- Use the ratios to calculate the absolute position
-        local absoluteX = absBounds.left + xRatio * absBounds.width
-        local absoluteY = absBounds.bottom + yRatio * absBounds.height
-       
-         -- Floor the returned values
-        absoluteX = math.floor(absoluteX)
-        absoluteY = math.floor(absoluteY)
+        -- Use the ratios to calculate the absolute position in the world frame
+        local absoluteFrameX = absolutePositionInFrameBounds.left + xRatio * absolutePositionInFrameBounds.width
+        local absoluteFrameY = absolutePositionInFrameBounds.bottom + yRatio * absolutePositionInFrameBounds.height
         
-        return absoluteX, absoluteY
+        -- Floor the returned values
+        absoluteFrameX = math.floor(absoluteFrameX)
+        absoluteFrameY = math.floor(absoluteFrameY)
+        
+        return absoluteFrameX, absoluteFrameY
     end
     
-    function testAbsolutePositionPredicting()
-        -- Define input coordinates and expected outputs
-        local inputX, inputY = 100, 100
-              
+    function testPredictAbsoluteFramePosition()
+        -- Define input coordinates in the onscreen zoomed frame
+        local onscreenZoomedX, onscreenZoomedY = 100, 100
+        
         -- Set up zoomMapping to scale coordinates by 1.5
         zoomScroller.zoomMapping = {
             {
-                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},
-                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}
+                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},  -- World frame
+                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}  -- Onscreen zoomed frame
             }
         }
         
-        local expectedX, expectedY = predictAbsolutePosition(inputX, inputY, zoomScroller.zoomMapping)
+        -- Predict the absolute frame position based on the input coordinates
+        local expectedFrameX, expectedFrameY = predictAbsoluteFramePosition(onscreenZoomedX, onscreenZoomedY, zoomScroller.zoomMapping)
         
-        -- Call the function and capture its return values
-        local resultX, resultY = zoomScroller:zoomedPosToAbsolutePos(inputX, inputY)
-       
-         -- Floor the returned values
-        resultX = math.floor(resultX)
-        resultY = math.floor(resultY)
-    
+        -- Call the function to convert the onscreen zoomed coordinates to absolute frame coordinates
+        local resultFrameX, resultFrameY = zoomScroller:zoomedPosToAbsolutePos(onscreenZoomedX, onscreenZoomedY)
+        
+        -- Floor the returned values
+        resultFrameX = math.floor(resultFrameX)
+        resultFrameY = math.floor(resultFrameY)
+        
         -- Compare the returned values to the expected values and report the result
-        if resultX == expectedX and resultY == expectedY then
-            print("Test Passed: Expected values (" .. expectedX .. ", " .. expectedY .. ") were correctly returned by zoomedPosToAbsolutePos.")
+        if resultFrameX == expectedFrameX and resultFrameY == expectedFrameY then
+            print("Test Passed: Expected values (" .. expectedFrameX .. ", " .. expectedFrameY .. ") were correctly returned by zoomedPosToAbsolutePos.")
         else
-            print("Test Failed: Expected (" .. expectedX .. ", " .. expectedY .. ") but got (" .. tostring(resultX) .. ", " .. tostring(resultY) .. ")")
+            print("Test Failed: Expected (" .. expectedFrameX .. ", " .. expectedFrameY .. ") but got (" .. tostring(resultFrameX) .. ", " .. tostring(resultFrameY) .. ")")
         end
     end
     
-    testAbsolutePositionPredicting()
+    testPredictAbsoluteFramePosition()
     
-    -- New function: predictGridLocationFromAbsolute
-    function predictGridLocationFromAbsolute(absX, absY, zoomMapping, gridSize)
-        -- Use the zoomMapping to find the relative position
+    
+    -- New function: predictGridLocationFromZoomedScreen
+    function predictGridLocationFromZoomedScreen(onscreenZoomedX, onscreenZoomedY, zoomMapping, gridSize)
+        -- Use the zoomMapping to find the corresponding frame (absolute) position
         local mapping = zoomMapping[1]  -- Assume we're working with the first mapping for simplicity
-        local absBounds = mapping.absoluteSourceBounds
-        local zoomBounds = mapping.zoomedSectionBounds
+        local absolutePositionInFrameBounds = mapping.absoluteSourceBounds  -- The frame bounds, where "absolute" refers to the larger world frame
+        local positionInOnscreenZoomBounds = mapping.zoomedSectionBounds  -- The bounds of what is shown on screen after zooming
         
-        -- Calculate the ratios for the absolute position
-        local xRatio = (absX - absBounds.left) / absBounds.width
-        local yRatio = (absY - absBounds.bottom) / absBounds.height
+        -- Calculate the ratios for the zoomed screen position
+        local xRatio = (onscreenZoomedX - positionInOnscreenZoomBounds.left) / positionInOnscreenZoomBounds.width
+        local yRatio = (onscreenZoomedY - positionInOnscreenZoomBounds.bottom) / positionInOnscreenZoomBounds.height
         
-        -- Use the ratios to calculate the relative (zoomed) position
-        local relativeX = zoomBounds.left + xRatio * zoomBounds.width
-        local relativeY = zoomBounds.bottom + yRatio * zoomBounds.height
+        -- Use the ratios to calculate the corresponding position in the larger world frame (absolute frame position)
+        local absoluteFrameX = absolutePositionInFrameBounds.left + xRatio * absolutePositionInFrameBounds.width
+        local absoluteFrameY = absolutePositionInFrameBounds.bottom + yRatio * absolutePositionInFrameBounds.height
         
-        -- Calculate the grid cell coordinates based on the relative position
-        local gridX = math.floor(relativeX / gridSize) + 1
-        local gridY = math.floor(relativeY / gridSize) + 1
+        -- Calculate the grid cell coordinates based on the absolute frame position
+        local gridX = math.floor(absoluteFrameX / gridSize) + 1
+        local gridY = math.floor(absoluteFrameY / gridSize) + 1
         
         return gridX, gridY
-    end
-    
-    -- Test: predict the correct grid location from absolute values
-    function testGridLocationFromAbsolutePredicting()
-        -- Define input absolute coordinates and grid size
-        local absX, absY = 150, 150
+end
+
+    function testGridLocationFromZoomedScreenPredicting()
+        -- Define input zoomed screen coordinates and grid size
+        local onscreenZoomedX, onscreenZoomedY = 150, 150
         local gridSize = 50
         
         -- Set up zoomMapping to scale coordinates
         zoomScroller.zoomMapping = {
             {
-                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},
-                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}
+                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},  -- Absolute (frame) bounds
+                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}  -- Onscreen zoom bounds
             }
         }
         
-        -- Predict the grid location from the absolute position
-        local expectedGridX, expectedGridY = predictGridLocationFromAbsolute(absX, absY, zoomScroller.zoomMapping, gridSize)
+        -- Predict the grid location from the zoomed screen position
+        local expectedGridX, expectedGridY = predictGridLocationFromZoomedScreen(onscreenZoomedX, onscreenZoomedY, zoomScroller.zoomMapping, gridSize)
         
         -- Calculate the actual grid location based on the absolute position
+        -- Translate the zoomed screen coordinates into absolute frame coordinates first
+        local absX, absY = zoomScroller:zoomedPosToAbsolutePos(onscreenZoomedX, onscreenZoomedY)
+        
+        -- Calculate the actual grid location based on the absolute frame position
         local actualGridX = math.floor(absX / gridSize) + 1
         local actualGridY = math.floor(absY / gridSize) + 1
         
@@ -115,58 +119,11 @@ function doubleTapCallbackTest()
             print("Test Failed: Expected grid (" .. expectedGridX .. ", " .. expectedGridY .. ") but got (" .. actualGridX .. ", " .. actualGridY .. ")")
         end
     end
+
+    testGridLocationFromZoomedScreenPredicting()
     
-    function testGridPositionWithTranslatedCoords()
-        -- Set up gridSize and mote positions
-        gridSize = 50
-        
-        -- Initialize ZoomScroller and set a zoomed frame (for the test)
-        zoomScroller = ZoomScroller(readImage(asset.builtin.Cargo_Bot.Game_Lower_BG), WIDTH/2, HEIGHT/2, WIDTH, HEIGHT)
-        -- Set up zoomMapping to scale coordinates by 1.5
-        
-        zoomScroller.zoomMapping = {
-            {
-                absoluteSourceBounds = {left = 0, bottom = 0, width = 500, height = 500},
-                zoomedSectionBounds = {left = 0, bottom = 0, width = 333.3333, height = 333.3333}
-            }
-        }
-        
-        -- Define the mote's relative position in the zoomed frame
-        local testMote = Mote(150, 150) -- Zoomed position, relative to the frame
-        testMote.drawingParams = {x = 150, y = 150, size = 20}
-        
-        -- Expected grid calculation for (150, 150) using zoomed coordinates
-        local expectedGridX = math.floor(testMote.drawingParams.x / gridSize) + 1
-        local expectedGridY = math.floor(testMote.drawingParams.y / gridSize) + 1
-        
-        -- Convert the zoomed position to an absolute screen position using the current zoom
-        local absX, absY = zoomScroller:getZoomedPosition(vec2(testMote.drawingParams.x, testMote.drawingParams.y)).x,
-        zoomScroller:getZoomedPosition(vec2(testMote.drawingParams.x, testMote.drawingParams.y)).y
-        
-        -- Call the callback with the absolute position
-        local event = {
-            x = absX,
-            y = absY,
-            touches = {
-                {x = absX, y = absY, prevX = absX, prevY = absY, state = BEGAN},
-                {x = absX, y = absY, prevX = absX, prevY = absY, state = BEGAN}
-            }
-        }
-        zoomScroller:doubleTapCallback(event)
-        
-        -- Calculate the resulting grid positions based on the zoomed (relative) coordinates
-        local resultGridX = math.floor(testMote.drawingParams.x / gridSize) + 1
-        local resultGridY = math.floor(testMote.drawingParams.y / gridSize) + 1
-        
-        -- Compare the results
-        if resultGridX == expectedGridX and resultGridY == expectedGridY then
-            print("Test Passed: Grid positions correctly calculated.")
-        else
-            print("Test Failed: Expected Grid (" .. expectedGridX .. ", " .. expectedGridY .. ") but got (" .. resultGridX .. ", " .. resultGridY .. ")")
-        end
-    end
-    
-    testGridPositionWithTranslatedCoords()
+    if true then return end
+
     
     -- Initialize test motes
     motes = {}

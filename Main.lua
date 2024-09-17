@@ -69,7 +69,10 @@ function setupFromStartScreen()
     motesDrawn = 0
     motesNotDrawn = 0
     
-    testing = false
+    
+    
+    
+    testing = true
     if testing then
         doubleTapCallbackTest()
         return
