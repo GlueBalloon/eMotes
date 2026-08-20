@@ -1,20 +1,20 @@
 -- Mote class
 Mote = class()
-
-function Mote:randomStartEmoji()
-    local startEmojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", 
+Mote.standardEmojis = {"😀", "😃", "😄", "😁", "😆", "😅", "😊", "😇", 
     "🙂", "🙃", "😉", "😌", "😗", "😙", "😚", "😋", "😛", "😝", "😜", 
     "🤪", "🤨", "🧐", "🤓", "😎", "😏", "😒", "😔", "😟", "😕", 
     "🙁", "🥺", "😢", "😠", "🤐", "🥴",
     "😳", "🤔", "🤭", "🤫", "🤥", "😶", "😐", 
     "😑", "😬", "🙄", "😯", "😴", "🤤",
     "😷", "🤒", "🤕", "🤠"}
-    return startEmojis[math.random(#startEmojis)]
+
+function Mote:randomStandardEmoji()
+    return self.standardEmojis[math.random(#Mote.standardEmojis)]
 end
 
 function Mote:init(x, y)
     self.size = MOTE_SIZE
-    self.emoji = math.random() < 0.4 and self:randomStartEmoji() or "😀"
+    self.emoji = math.random() < 0.4 and self:randomStandardEmoji() or "😀"
     self.defaultEmoji = self.emoji
     self.position = vec2(x or math.random(WIDTH), y or math.random(HEIGHT))
     self.velocity = vec2(math.random() * 4 - 2, math.random() * 4 - 2)
@@ -27,29 +27,30 @@ function Mote:init(x, y)
     self.currentAffecting = {}
     self.affectedBy = {}  -- Table to keep track of affecting catalytes
     self.state = "normal" -- Possible states: "normal", "hot", "cold"
+    self.tapCount = 0
+    self.lastTapTime = 0
+    self.velocityForRageMode = vec2(math.random(-1, 1) * 10, math.random(-1, 1) * 10)
 end
 
 function Mote:updateAppearance()
     --skip if this mote is a catalyte itself
     if self.applyEffect then return end
-    --[[
-    --code commented out but left in as a reminder:
-    --randomly removing special-case emoji feels
-    --disappointing to a viewer
-    if math.random() < 0.01 then
-        if self.emoji == "😀" then
-            self.emoji = self:randomStartEmoji()
-        else  
-            self.emoji = "😀"
-        end
-    end
-    ]]
     if self.state == "hot" then
         self.emoji = "🥵"
         self.color = color(229, 143, 46) -- Hot color
     elseif self.state == "cold" then
         self.emoji = "🥶"
         self.color = color(90, 183, 224) -- Cold color
+    elseif self.state == "rage" then
+        local rand = math.random(3)
+        if rand == 1 then
+            self.emoji = "😡"
+        elseif rand == 2 then
+            self.emoji = "😤"
+        else
+            self.emoji = "🤬"
+        end
+        self.color = self.defaultColor -- Normal color
     else
         self.emoji = self.defaultEmoji
         self.color = self.defaultColor -- Normal color
@@ -157,7 +158,15 @@ function Mote:isVisibleIn(frame, visibleAreas)
     return false
 end
 
-function Mote:drawFromParams(x, y, size)
+function Mote:draw()
+    pushStyle()
+    fill(self.color)
+    noStroke()
+    ellipse(self.position.x, self.position.y, self.size)
+    popStyle()
+end
+
+function Mote:drawFromParams()
     local x, y, size = self.drawingParams.x, self.drawingParams.y, self.drawingParams.size
     pushStyle()
     fill(self.color)
@@ -167,12 +176,161 @@ function Mote:drawFromParams(x, y, size)
     -- Use the provided x, y, and size to draw
     if size >= transitionalSize then
         fill(255)
-        fontSize(BASE_EMOJI_SIZE * (size / self.size))  -- Adjust fontSize based on the new size
-        text(self.emoji, x, y)
+        fontSize(size * 0.75)
+        text(self.emoji, x * 0.9969, y * 0.9992)
     else
         ellipse(x, y, size)
     end
     popStyle()
+end
+
+function Mote:startRageMode()
+    local mote = self --shortcut for adapting some GPT code
+    local jitterDuration = 1
+    self.velocityForRageMode = vec2(math.random(-1, 1) * 30, math.random(-1, 1) * 30) 
+    -- Start jitter as a buildup to rage mode
+    self:createChainedJitterSequence(jitterDuration, 1.25, 20, function()
+        -- After jitter completes, start the rage mode
+        self.isAnimating = true
+        self.velocityForRageMode = vec2(math.random(-5, 5), math.random(-5, 5))  -- Assign random velocity
+--        self.velocityForRageMode = vec2(math.random(-1, 1) * 1, math.random(-1, 1) * 1) 
+                
+        local rageTime = 8  -- Duration of rage mode in seconds
+        local startTime = os.clock() + jitterDuration -- Capture the start time for rage mode
+        
+        local function rageUpdate()
+                if os.clock() - startTime >= rageTime then
+                    -- End rage mode
+                    mote.state = "normal"
+                    mote.tapCount = 0
+                    mote.isAnimating = false
+                    mote.emoji = mote.originalEmoji  -- Reset emoji
+                    --mote.velocityForRageMode = vec2(0, 0)  -- Stop moving
+                    self:decelerate(1)
+                    return
+                end
+                
+                -- Update mote position based on velocity
+                mote.position.x = mote.position.x + mote.velocityForRageMode.x
+                mote.position.y = mote.position.y + mote.velocityForRageMode.y
+                
+                -- Determine current grid cell and check for collisions
+                local neighbors = checkForNeighbors(mote, currentGrid)
+                for _, neighbor in ipairs(neighbors) do
+                    if isColliding(mote, neighbor) then
+                        -- Reflect the enraged mote's velocity
+                        local dx = mote.position.x - neighbor.position.x
+                        local dy = mote.position.y - neighbor.position.y
+                        local angle = math.atan(dy, dx)
+                        mote.velocityForRageMode = vec2(math.cos(angle), math.sin(angle)) * mote.velocityForRageMode:len()
+                    end
+                end
+            self:handleCollisions()  -- Handle collisions
+            -- Schedule next update
+            if self.isAnimating then
+                tween.delay(0.05, rageUpdate)
+            end
+        end
+        
+        rageUpdate()
+    end)
+end
+
+function Mote:decelerate(decelerationTime)
+    local initialVelocity = vec2(self.velocityForRageMode.x, self.velocityForRageMode.y)
+    local decelerationRate = vec2(initialVelocity.x / decelerationTime, initialVelocity.y / decelerationTime)
+    
+    local function reduceSpeed(elapsedTime)
+        if elapsedTime >= decelerationTime then
+            self.velocityForRageMode = vec2(0, 0)  -- Stop moving
+            self.isAnimating = false
+            return
+        end
+        
+        self.velocityForRageMode.x = initialVelocity.x - decelerationRate.x * elapsedTime
+        self.velocityForRageMode.y = initialVelocity.y - decelerationRate.y * elapsedTime
+        
+        -- Update mote position based on decreasing velocity
+        self.position.x = self.position.x + self.velocityForRageMode.x
+        self.position.y = self.position.y + self.velocityForRageMode.y
+        
+        tween.delay(0.05, function() reduceSpeed(elapsedTime + 0.05) end)
+    end
+    
+    reduceSpeed(0)  -- Start deceleration from t=0
+end
+
+
+function isColliding(mote1, mote2)
+    local dist = vec2(mote1.position.x - mote2.position.x, mote1.position.y - mote2.position.y)
+    return dist:len() <= (mote1.size / 2 + mote2.size / 2)
+end
+
+function Mote:createChainedJitterSequence(duration, intensity, numJitters, onComplete)
+    -- Store original position only once at the beginning of the sequence
+    local originalPosition = vec2(self.position.x, self.position.y)
+    
+    local function jitterStep(currentStep)
+        if currentStep > numJitters then
+            -- Ensure the mote returns to the original position at the end of the sequence
+            self.position = originalPosition
+            if onComplete then onComplete() end
+            return
+        end
+        
+        -- Apply jitter by setting a random offset from the original position
+        self.position = vec2(
+        originalPosition.x + (math.random() - 0.5) * 2 * intensity,
+        originalPosition.y + (math.random() - 0.5) * 2 * intensity
+        )
+        
+        -- Schedule the reset to original position
+        tween.delay(duration / numJitters, function()
+            self.position = originalPosition  -- Reset to original position after each jitter
+            
+            -- Delay before next jitter to make sure the reset is visible
+            tween.delay(duration / (numJitters * 2), function()
+                jitterStep(currentStep + 1)  -- Continue to the next jitter
+            end)
+        end)
+    end
+    
+    -- Start the jitter sequence
+    jitterStep(1)
+end
+
+function Mote:applyInstantVisualOffset(intensity)
+    self.originalPosition = vec2(self.position.x, self.position.y)  -- Save the original position
+    local randomOffset = vec2(
+    (math.random() - 0.5) * 2 * intensity, 
+    (math.random() - 0.5) * 2 * intensity
+    )
+    self.position = vec2(self.originalPosition.x + randomOffset.x, self.originalPosition.y + randomOffset.y)
+end
+
+function Mote:removeVisualOffset()
+    self.position = self.originalPosition  -- Reset to the original position
+end
+
+function Mote:handleCollisions()
+    local neighbors = checkForNeighbors(self, currentGrid)  -- Assuming this function returns nearby motes
+    for _, neighbor in ipairs(neighbors) do
+        if isColliding(self, neighbor) then
+            -- Reflect the enraged mote's velocity
+            local dx = self.position.x - neighbor.position.x
+            local dy = self.position.y - neighbor.position.y
+            local angle = math.atan(dy, dx)
+            self.velocity = vec2(math.cos(angle), math.sin(angle)) * self.velocity:len()
+            
+            -- Apply jitter effect to the neighbor mote as a reaction to collision
+            neighbor:createChainedJitterSequence(0.0051, 0.9, 5, function()
+                -- Optional callback if needed after jitter
+            end)
+            
+            -- Play collision sound, spatially adjusted
+          --  self:playSpatialSound("path/to/pinball_collision.wav")
+        end
+    end
 end
 
 

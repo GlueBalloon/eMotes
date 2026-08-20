@@ -45,7 +45,6 @@ categories = {
     Confrontational = {
         emojis = {"😠", "😡", "🤬", "😤", "😖", "😫", "🥵", "😓", "😑"},
         sounds = {asset.documents.eMotes.Confrontational_Sounds["angry-rummmble.wav"], 
-            asset.documents.eMotes.Confrontational_Sounds["grumpy-old-man.wav"],
             asset.documents.eMotes.Confrontational_Sounds.umadbro        
         } 
     },
